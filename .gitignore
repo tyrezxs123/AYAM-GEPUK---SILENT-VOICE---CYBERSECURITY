@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.db
+*.sqlite3
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env*.local
+
+# Local TLS for phone demos (private key!)
+certs/
+
+# Eval artifacts
+eval/data/
+eval/out/
+
+# OS
+Thumbs.db
+.DS_Store

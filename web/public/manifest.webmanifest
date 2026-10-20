@@ -1,0 +1,24 @@
+{
+  "name": "SuaraSah - Sahkan Suara",
+  "short_name": "SuaraSah",
+  "description": "Semak sama ada nota suara atau panggilan benar-benar datang daripada orang itu.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1b4ddb",
+  "lang": "ms-MY",
+  "dir": "ltr",
+  "categories": ["utilities", "security"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Semak Audio", "url": "/verify" },
+    { "name": "Imbas Panggilan", "url": "/live" },
+    { "name": "Tandatangan Suara", "url": "/sign" }
+  ]
+}

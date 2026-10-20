@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    /* 18px base: the primary persona is 62 and reading on a 360px screen */
+    font-size: 18px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-white text-ink antialiased;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+      Arial, "Noto Sans", sans-serif;
+    /* never let a verdict card sit under the notch or the home indicator */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    overscroll-behavior-y: none;
+  }
+
+  /* Tapping should never zoom or select text on this app */
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-4 ring-brand/40 rounded-lg;
+  }
+}
+
+@layer components {
+  .screen {
+    @apply mx-auto w-full max-w-md px-4 pb-10;
+  }
+
+  .big-button {
+    @apply flex w-full items-center gap-4 rounded-2xl border-2 px-5 py-5 text-left
+           transition active:scale-[0.985];
+    min-height: theme("spacing.tap");
+  }
+
+  .primary-button {
+    @apply flex w-full items-center justify-center gap-3 rounded-2xl bg-brand px-5 py-4
+           text-lg font-semibold text-white shadow-sm transition
+           active:scale-[0.985] disabled:opacity-50 disabled:active:scale-100;
+    min-height: theme("spacing.tap");
+  }
+
+  .secondary-button {
+    @apply flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-ink/15
+           bg-white px-5 py-4 text-lg font-semibold text-ink transition
+           active:scale-[0.985] disabled:opacity-50;
+    min-height: theme("spacing.tap");
+  }
+
+  .field {
+    @apply w-full rounded-xl border-2 border-ink/15 bg-white px-4 py-3 text-base
+           placeholder:text-ink/35 focus:border-brand focus:outline-none;
+    min-height: 3rem;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold;
+  }
+
+  .card {
+    @apply rounded-2xl border-2 p-5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
