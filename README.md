@@ -58,29 +58,41 @@ It operates under a strict, mathematically enforced security principle:
 ## 🏛️ System Architecture
 
 ```mermaid
-graph TD
-    User([User Voice Note / Speaker Call]) --> WebApp["SilentVoice Frontend (Next.js 15 PWA)"]
-    WebApp -->|HTTP / WebSocket| Backend["FastAPI Engine (Python 3.11)"]
-    
-    subgraph "Verification Engine"
-        Backend --> Watermark["Watermark Extractor (Spread-Spectrum)"]
-        Backend --> Hash["Perceptual Fingerprint (Haitsma-Kalker)"]
-        Backend --> Heuristic["AI Acoustic Screening"]
-        Backend --> Phrases["BM/EN Scam-Phrase Heuristics (116 Rules)"]
-    end
+flowchart TD
+    User["User Voice Note or Live Call"] --> WebApp["SilentVoice Frontend (Next.js PWA)"]
+    WebApp --> Backend["FastAPI Backend Engine"]
 
-    Watermark --> Provenance["Cryptographic Provenance (Ed25519)"]
+    Backend --> Watermark["1. Watermark Detection (Spread-Spectrum)"]
+    Backend --> Hash["2. Perceptual Hashing (Haitsma-Kalker)"]
+    Backend --> AI["3. AI Voice Screening (Acoustic DSP)"]
+    Backend --> Phrases["4. Scam-Phrase Analysis (116 BM/EN Rules)"]
+
+    Watermark --> Provenance["Cryptographic Engine (Ed25519)"]
     Hash --> Provenance
-    
-    Provenance --> Decision{Provenance Found?}
-    Decision -->|Valid Signature & Segments Match| V1["VERIFIED"]
-    Decision -->|Watermark Mismatch / Spliced Segment| V2["TAMPERED"]
-    Decision -->|Played in Live Call / Expired| V3["REPLAYED / EXPIRED"]
-    Decision -->|No Mark| RiskFusion["Multimodal Risk Appraisal"]
-    
-    Heuristic --> RiskFusion
+
+    Provenance --> Decision{"Provenance Record Found?"}
+    Decision -->|"Valid Signature and Segment Match"| V1["VERIFIED"]
+    Decision -->|"Watermark Mismatch or Spliced"| V2["TAMPERED"]
+    Decision -->|"Replayed in Call or Stale"| V3["REPLAYED or EXPIRED"]
+    Decision -->|"No Digital Signature Found"| RiskFusion["Risk Fusion Engine"]
+
+    AI --> RiskFusion
     Phrases --> RiskFusion
-    RiskFusion --> V4["UNVERIFIED (Low / Med / High Risk)"]
+    RiskFusion --> V4["UNVERIFIED (Low, Medium, or High Risk)"]
+```
+
+```text
+  [User Voice Note / Speaker Call]
+                 │
+                 ▼
+  [SilentVoice Frontend (Next.js 15 PWA)]
+                 │
+                 ▼  (HTTP / WebSocket)
+  [FastAPI Backend Engine]
+   ├── 1. Watermark Detection ──┐
+   ├── 2. Perceptual Hashing  ──┼──> [Ed25519 Provenance] ──> [VERIFIED / TAMPERED / REPLAYED / EXPIRED]
+   ├── 3. AI Voice Screening  ──┤
+   └── 4. Scam Phrase Rules   ──┴──> [Risk Fusion Engine] ──> [UNVERIFIED (Low / Med / High Risk)]
 ```
 
 ### Why Perceptual Hashing instead of SHA-256?
