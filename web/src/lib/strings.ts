@@ -11,7 +11,7 @@
 export type Lang = "ms" | "en";
 
 const ms = {
-  appName: "SuaraSah",
+  appName: "SilentVoice",
   tagline: "Jangan percaya suara. Sahkan asalnya.",
   langName: "English",
   langSwitch: "Tukar ke English",
@@ -166,14 +166,17 @@ const ms = {
   back: "Kembali",
   errorTitle: "Tidak dapat memproses",
   offline: "Tiada sambungan ke pelayan.",
-  apiHint: "Pastikan pelayan SuaraSah berjalan.",
+  apiHint: "Pastikan pelayan SilentVoice berjalan.",
   seconds: "detik",
   engineLabel: "Enjin",
   privacyNote: "Audio diproses dalam ingatan dan tidak disimpan.",
+  disclaimerTitle: "Privasi & Penafian",
+  disclaimerBody: "Audio diproses terus dalam ingatan peranti & pelayan dan tidak disimpan. Saringan suara AI memberi panduan risiko awal, bukan bukti mutlak.",
+  technicalDetails: "Maklumat Teknikal",
 };
 
 const en: Record<keyof typeof ms, string> = {
-  appName: "SuaraSah",
+  appName: "SilentVoice",
   tagline: "Don't trust the voice. Verify its origin.",
   langName: "Bahasa Melayu",
   langSwitch: "Switch to Bahasa Melayu",
@@ -316,10 +319,13 @@ const en: Record<keyof typeof ms, string> = {
   back: "Back",
   errorTitle: "Could not process this",
   offline: "No connection to the server.",
-  apiHint: "Make sure the SuaraSah server is running.",
+  apiHint: "Make sure the SilentVoice server is running.",
   seconds: "seconds",
   engineLabel: "Engine",
   privacyNote: "Audio is processed in memory and not stored.",
+  disclaimerTitle: "Privacy & Disclaimer",
+  disclaimerBody: "Audio is processed purely in memory and never stored on servers. AI voice screening provides risk guidance, not definitive proof.",
+  technicalDetails: "Technical Details",
 };
 
 export type StringKey = keyof typeof ms;

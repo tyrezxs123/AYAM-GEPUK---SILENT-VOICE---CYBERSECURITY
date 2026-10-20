@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AppShell } from "@/components/AppShell";
 import { ErrorBox, LevelMeter } from "@/components/Feedback";
-import { CheckIcon, ClockIcon, PhoneOffIcon, QuestionIcon, StopIcon, WarningIcon } from "@/components/Icons";
+import { CheckIcon, ClockIcon, PhoneOffIcon, QuestionIcon, ShieldIcon, StopIcon, WarningIcon } from "@/components/Icons";
 import { ConsentSheet, ReportSheet } from "@/components/Sheets";
 import { EngineNote, PhraseChips } from "@/components/VerdictCard";
 import { useI18n } from "@/lib/i18n";
@@ -192,9 +192,23 @@ export default function LivePage() {
             </button>
           )}
 
-          <p className="text-sm text-ink/50">{t("liveNothingSaved")}</p>
+          <div className="rounded-xl border border-ink/10 dark:border-white/10 bg-slate-100/70 dark:bg-slate-900/50 p-3 text-xs text-ink/75 dark:text-slate-300">
+            <p className="flex items-center gap-1.5 font-semibold text-ink dark:text-slate-200">
+              <ShieldIcon className="h-3.5 w-3.5 text-brand dark:text-blue-400 shrink-0" />
+              <span>{t("disclaimerTitle")}</span>
+            </p>
+            <p className="mt-1 leading-relaxed text-ink/70 dark:text-slate-300">{t("liveNothingSaved")}</p>
+          </div>
+
           {update && (
-            <EngineNote engine={update.detection.engine} calibrated={update.detection.calibrated} />
+            <details className="cursor-pointer text-[11px] text-ink/45 dark:text-slate-400">
+              <summary className="font-semibold select-none hover:text-ink/75 dark:hover:text-slate-200">
+                {t("technicalDetails")}
+              </summary>
+              <div className="mt-1 font-mono">
+                <EngineNote engine={update.detection.engine} calibrated={update.detection.calibrated} />
+              </div>
+            </details>
           )}
         </div>
       )}

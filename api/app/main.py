@@ -36,7 +36,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     lifespan=lifespan,
-    title="SuaraSah API",
+    title="SilentVoice API",
     version="0.1.0",
     description=(
         "Voice provenance (verify what is real) plus AI-voice and scam-phrase "

@@ -7,7 +7,7 @@ import { health } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import type { Engines } from "@/lib/types";
 import { HeaderControls } from "@/components/HeaderControls";
-import { FileIcon, PenIcon, WaveIcon } from "@/components/Icons";
+import { FileIcon, PenIcon, ShieldIcon, WaveIcon } from "@/components/Icons";
 
 /** Home screen: three buttons, nothing else. Every task is <= 3 taps from here. */
 export default function Home() {
@@ -76,24 +76,32 @@ export default function Home() {
           {t("homeFooter")}
         </p>
 
-        <footer className="mt-6 space-y-1 text-xs text-ink/50 dark:text-slate-400">
+        <footer className="mt-8 space-y-3">
           {offline && (
-            <p className="text-verdict-red dark:text-red-400">
-              {t("offline")} {t("apiHint")}
+            <p className="rounded-xl border border-verdict-red/30 bg-verdict-redbg dark:bg-rose-950/40 p-3 text-sm text-verdict-red dark:text-rose-400 text-center font-semibold">
+              ⚠️ {t("offline")} {t("apiHint")}
             </p>
           )}
-          {engines && (
-            <>
-              <p>
-                {t("engineLabel")}: {engines.watermark.engine}
-              </p>
-              <p>
-                {engines.detector.engine}
-                {!engines.detector.calibrated && ` · ${t("screeningOnly")}`}
-              </p>
-            </>
-          )}
-          <p>{t("privacyNote")}</p>
+
+          <div className="rounded-2xl border border-ink/10 dark:border-white/10 bg-slate-100/80 dark:bg-slate-900/60 p-4 text-xs text-ink/75 dark:text-slate-300 shadow-xs">
+            <div className="flex items-center gap-2 font-semibold text-ink dark:text-slate-200">
+              <ShieldIcon className="h-4 w-4 text-brand dark:text-blue-400 shrink-0" />
+              <span>{t("disclaimerTitle")}</span>
+            </div>
+            <p className="mt-1.5 leading-relaxed text-ink/70 dark:text-slate-300">{t("disclaimerBody")}</p>
+
+            {engines && (
+              <details className="mt-2.5 pt-2 border-t border-ink/10 dark:border-white/10 cursor-pointer">
+                <summary className="text-[11px] font-semibold text-ink/50 dark:text-slate-400 hover:text-ink/80 dark:hover:text-slate-200 select-none">
+                  {t("technicalDetails")}
+                </summary>
+                <div className="mt-1 space-y-0.5 text-[11px] text-ink/50 dark:text-slate-400 font-mono">
+                  <p>{t("engineLabel")}: {engines.watermark.engine}</p>
+                  <p>{engines.detector.engine}{!engines.detector.calibrated && ` · ${t("screeningOnly")}`}</p>
+                </div>
+              </details>
+            )}
+          </div>
         </footer>
       </div>
     </div>

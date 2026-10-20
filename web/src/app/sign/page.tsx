@@ -136,7 +136,7 @@ export default function SignPage() {
 
       const signature = await identity.sign(payload);
       const blob = await signSession(session.session_id, signature);
-      const filename = `suarasah-${device.displayName.replace(/\s+/g, "-").toLowerCase()}.wav`;
+      const filename = `silentvoice-${device.displayName.replace(/\s+/g, "-").toLowerCase()}.wav`;
       setSigned({ blob, url: URL.createObjectURL(blob), filename });
       setPhase("done");
     } catch (err) {
@@ -176,7 +176,7 @@ export default function SignPage() {
     const file = new File([signed.blob], signed.filename, { type: "audio/wav" });
     if (navigator.canShare?.({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: "SuaraSah" });
+        await navigator.share({ files: [file], title: "SilentVoice" });
         return;
       } catch {
         /* user dismissed the share sheet */

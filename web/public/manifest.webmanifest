@@ -1,6 +1,6 @@
 {
-  "name": "SuaraSah - Sahkan Suara",
-  "short_name": "SuaraSah",
+  "name": "SilentVoice - Voice Provenance",
+  "short_name": "SilentVoice",
   "description": "Semak sama ada nota suara atau panggilan benar-benar datang daripada orang itu.",
   "start_url": "/",
   "scope": "/",

@@ -7,11 +7,11 @@ import { ServiceWorker } from "@/components/ServiceWorker";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SuaraSah — Sahkan Suara",
+  title: "SilentVoice",
   description:
-    "Semak sama ada nota suara atau panggilan benar-benar datang daripada orang itu. Verify voice provenance and get warned about AI voices.",
+    "Verify whether a voice note or call is truly authentic. SilentVoice provides cryptographic provenance and AI scam-voice screening.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "SuaraSah" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "SilentVoice" },
   icons: {
     icon: [
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },

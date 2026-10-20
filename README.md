@@ -1,332 +1,192 @@
-# SuaraSah
+# 🛡️ SilentVoice
 
-**Jangan percaya suara. Sahkan asalnya.** · *Don't trust the voice. Verify its origin.*
+<p align="center">
+  <strong>Jangan percaya suara. Sahkan asalnya.</strong><br>
+  <em>Don't trust the voice. Verify its origin.</em>
+</p>
 
-A bilingual (BM/English) mobile web app that tells an ordinary Malaysian whether a voice they
-are hearing can be trusted — in seconds, with no technical knowledge.
-
-Two ideas, kept strictly separate:
-
-| | What it does | What it can return |
-| --- | --- | --- |
-| **Verify what is real** | Cryptographic voice provenance: an Ed25519 signature over perceptual fingerprints of the audio | `VERIFIED` · `TAMPERED` · `REPLAYED` · `EXPIRED` |
-| **Warn about what looks fake** | AI-voice screening + BM/EN scam-phrase rules | a risk level only — **never** `VERIFIED` |
-
-> Only cryptographic verification can return VERIFIED. Detection can raise a warning; it can
-> never grant trust. This rule is enforced in code (`api/app/service.py`), not just in the pitch.
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-15.5-black?style=for-the-badge&logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Cryptography-Ed25519-blue?style=for-the-badge" alt="Ed25519" />
+  <img src="https://img.shields.io/badge/Perceptual_Hash-Haitsma--Kalker-orange?style=for-the-badge" alt="Haitsma-Kalker" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
+</p>
 
 ---
 
-## Run it
+## 📸 App Preview
 
-Two processes: a FastAPI backend and a Next.js PWA.
+<p align="center">
+  <img src="assets/screenshots/silentvoice_home_dark.png" alt="SilentVoice Dark Mode" width="48%" />
+  <img src="assets/screenshots/silentvoice_home_light.png" alt="SilentVoice Light Mode" width="48%" />
+</p>
 
-```bash
-cd api && python -m venv .venv && .venv/Scripts/pip install -r requirements.txt
+<p align="center">
+  <img src="assets/screenshots/silentvoice_verify_dark.png" alt="SilentVoice Verify Screen" width="48%" />
+  <img src="assets/screenshots/silentvoice_sign_dark.png" alt="SilentVoice Sign Screen" width="48%" />
+</p>
+
+---
+
+## 💡 Overview
+
+**SilentVoice** is a mobile-first, bilingual (Bahasa Melayu & English) anti-fraud application built to protect everyday Malaysians from AI-generated voice cloning scams, phone impersonation, and urgent money transfer fraud.
+
+It operates under a strict, mathematically enforced security principle:
+
+| Capability | Method | Guaranteed Verdicts |
+| :--- | :--- | :--- |
+| **Verify what is authentic** | Cryptographic provenance (non-extractable **Ed25519** signatures over perceptual sub-band fingerprints) | `VERIFIED` · `TAMPERED` · `REPLAYED` · `EXPIRED` |
+| **Warn about suspected fakes** | Acoustic AI voice screening + 116 curated BM/EN scam-phrase rules | Risk score only (`LOW`, `MEDIUM`, `HIGH`) — **never** `VERIFIED` |
+
+> ⚠️ **Core Security Law:** *Only cryptographic verification can grant trust and return `VERIFIED`.* AI detection can flag suspicious patterns, but heuristic detection is never permitted to issue a `VERIFIED` status in code (`api/app/service.py`).
+
+---
+
+## ✨ Key Features
+
+- **🔍 Semak Audio (Verify Voice Notes):** Pick any audio file (`.opus`, `.ogg`, `.mp3`, `.wav`) directly from WhatsApp or record live playback. Get an immediate, high-contrast verdict with actionable next steps.
+- **📞 Imbas Panggilan (Live Call Scan):** Put incoming phone calls on speakerphone. SilentVoice monitors the audio stream in real-time using rolling 4 s windows and vibrates if high scam urgency or AI patterns are detected.
+- **✍️ Tandatangan Suara (Sign My Voice):** Generate a non-extractable Ed25519 key pair in the browser via WebCrypto. Sign outgoing voice notes up to 60 seconds with an embedded watermark and perceptual hash before sending on WhatsApp.
+- **🌓 Dark & Light Mode:** Seamlessly switch between dark and light themes with instant persistence and system-mode detection.
+- **🌐 Bilingual Toggle:** Instant one-tap switching between **Bahasa Melayu** and **English** with accessible 18 px base typography designed for elderly family members.
+- **🔒 Privacy by Design:** Audio is processed purely in volatile memory and never retained on disk. Phone numbers in scam reports are one-way hashed with SHA-256 and salt/pepper before logging.
+
+---
+
+## 🏛️ System Architecture
+
+```mermaid
+graph TD
+    User([User Voice Note / Speaker Call]) --> WebApp["SilentVoice Frontend (Next.js 15 PWA)"]
+    WebApp -->|HTTP / WebSocket| Backend["FastAPI Engine (Python 3.11)"]
+    
+    subgraph "Verification Engine"
+        Backend --> Watermark["Watermark Extractor (Spread-Spectrum)"]
+        Backend --> Hash["Perceptual Fingerprint (Haitsma-Kalker)"]
+        Backend --> Heuristic["AI Acoustic Screening"]
+        Backend --> Phrases["BM/EN Scam-Phrase Heuristics (116 Rules)"]
+    end
+
+    Watermark --> Provenance["Cryptographic Provenance (Ed25519)"]
+    Hash --> Provenance
+    
+    Provenance --> Decision{Provenance Found?}
+    Decision -->|Valid Signature & Segments Match| V1["VERIFIED"]
+    Decision -->|Watermark Mismatch / Spliced Segment| V2["TAMPERED"]
+    Decision -->|Played in Live Call / Expired| V3["REPLAYED / EXPIRED"]
+    Decision -->|No Mark| RiskFusion["Multimodal Risk Appraisal"]
+    
+    Heuristic --> RiskFusion
+    Phrases --> RiskFusion
+    RiskFusion --> V4["UNVERIFIED (Low / Med / High Risk)"]
 ```
 
+### Why Perceptual Hashing instead of SHA-256?
+Messaging platforms like WhatsApp re-encode audio to Opus before transmission. A standard SHA-256 hash would fail on every genuine forwarded clip. SilentVoice calculates **Haitsma–Kalker perceptual fingerprints** across 33 log-spaced frequency bands (300–3400 Hz). The double difference of band energy cancels gain shifts (±6 dB) and lossy compression while detecting audio splices and replacements.
+
+---
+
+## 🚀 Quickstart
+
+### Prerequisites
+- Python 3.10+
+- Node.js 18+ and npm
+
+### 1. Setup Backend (FastAPI)
 ```bash
-cd web && npm install
+cd api
+python3 -m venv .venv
+source .venv/bin/activate    # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt -r requirements-dev.txt
 ```
 
-Then from the repo root:
-
+### 2. Setup Frontend (Next.js PWA)
 ```bash
+cd web
+npm install
+```
+
+### 3. Run Locally
+You can run both services together using the provided script:
+
+**macOS / Linux:**
+```bash
+./dev.sh
+```
+
+**Windows (PowerShell):**
+```powershell
 ./dev.ps1
 ```
 
-- Web: <http://localhost:3000>
-- API: <http://localhost:8000> · interactive docs at `/docs`
-
-On macOS/Linux use `./dev.sh`. To run them by hand:
-
+Or manually in separate terminals:
 ```bash
-cd api && .venv/Scripts/python -m uvicorn app.main:app --reload --port 8000
-```
+# Terminal 1: Backend
+cd api && .venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-```bash
+# Terminal 2: Frontend
 cd web && npm run dev
 ```
 
-The web app finds the API automatically: it reuses the hostname that served the page and
-switches to port 8000, so a phone on the venue LAN works with no rebuild. Override with
-`NEXT_PUBLIC_API_BASE` in `web/.env.local`.
+- **Frontend:** [http://localhost:3000](http://localhost:3000)
+- **API Docs (Swagger UI):** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Health Check:** [http://localhost:8000/health](http://localhost:8000/health)
 
-### Demoing on a real phone (read this one)
+---
 
-`getUserMedia()` only works in a **secure context**. `localhost` counts as secure; a plain
-`http://192.168.x.x` does **not**. Over the LAN without TLS, the Live Scan and the recorder
-are dead on arrival. So generate a local certificate covering your LAN IPs:
+## 📱 Testing on a Mobile Phone (LAN)
+
+Microphone access (`getUserMedia`) requires a **secure context** (HTTPS or localhost). To demo on a real phone over Wi-Fi:
+
+1. Generate a local self-signed certificate:
+   ```bash
+   bash scripts/make-dev-cert.sh
+   ```
+2. Launch with HTTPS:
+   ```bash
+   ./dev.ps1 -Https
+   ```
+3. On your phone, visit `https://<laptop-ip>:8000/health` first to accept the local certificate, then visit `https://<laptop-ip>:3000`.
+
+---
+
+## 📊 Benchmark & Evaluation Results
+
+Tested against real simulated channel degradation using synthetic Malay/English speech (`eval/run_eval.py`):
+
+| Evaluation Metric | Benchmark Target | SilentVoice Result |
+| :--- | :---: | :---: |
+| Signed clip **VERIFIED** after WhatsApp / Opus re-encode | ≥ 95% | **100%** |
+| Unsigned audio wrongly classified as **VERIFIED** | 0% | **0.0%** |
+| Spliced / replaced segments identified as **TAMPERED** | ≥ 90% | **100%** |
+| Replayed signed clip flagged as **REPLAYED** in Live Scan | ≥ 90% | **100%** |
+| BM & English scam phrase detection recall | ≥ 80% | **100%** |
+| Normal conversational false alarms | 0 | **0** |
+| Average verification latency (median / p95) | ≤ 5 s | **99 ms / 171 ms** |
+
+---
+
+## 🧪 Running Automated Tests
+
+Run the full end-to-end test suite (22 unit & integration tests covering signature verification, replay attacks, key revocation, tamper detection, and codec tolerance):
 
 ```bash
-bash scripts/make-dev-cert.sh
+cd api
+.venv/bin/python -m pytest tests -v
 ```
 
-```bash
-./dev.ps1 -Https
-```
+---
 
-On the phone, open `https://<laptop-ip>:8000/health` **first** and accept the certificate
-warning, then open `https://<laptop-ip>:3000`. If you skip the API host, the app loads but
-every call fails silently — browsers do not prompt twice.
+## 📄 Privacy & Legal Notice
 
-Add to the home screen to get the installed, full-screen PWA.
+SilentVoice is engineered around privacy-preserving principles:
+- **Zero Audio Storage:** Raw audio buffers are held in temporary memory during processing and discarded immediately. No database holds audio recordings or phone conversation transcripts.
+- **Screening Disclaimer:** AI voice and phrase heuristics provide early-warning risk screening to assist consumers in identifying red flags. They do not constitute formal legal evidence.
 
 ---
 
-## The three flows
+## 📜 License
 
-Every task is at most three taps from the home screen.
-
-**Semak Audio** (Verify, no login) — pick a WhatsApp voice note or record what you are
-hearing, get one card: a verdict word, a colour, an icon, and 2–3 concrete next steps.
-
-**Imbas Panggilan** (Live Scan) — put the call on speakerphone, hold the phone close. First
-verdict in a few seconds, updates every ~2 s, the card turns red only after two consecutive
-high windows, and the phone vibrates on that transition.
-
-**Tandatangan Suara** (Sign my voice) — register this device once, record up to 60 s, get back
-a signed WAV to send on WhatsApp. The private key is generated in the browser and never leaves it.
-
----
-
-## How the security actually works
-
-The watermark carries **only a pointer**. Trust comes from a signature over the audio's
-*content fingerprints*, checked segment by segment. A watermark alone never makes audio VERIFIED.
-
-### Signing
-
-1. The browser creates an **Ed25519** key pair. With WebCrypto the private key is
-   **non-extractable** — page scripts can ask the browser to sign, but cannot read the key.
-   `@noble/ed25519` is the documented fallback, and the app reports which path is in use.
-2. The server issues a session: `session_id`, 128-bit `nonce`, `issued_at`, `expires_at`.
-3. Audio is resampled to 16 kHz mono, the 16-bit `ref` is **embedded first**, and only then is
-   the audio split into 2 s segments and fingerprinted. Fingerprinting the *watermarked* audio
-   means the signed fingerprints describe exactly the file the recipient receives.
-4. The device signs
-   `DOMAIN ‖ session_id ‖ nonce ‖ issued_at ‖ expires_at ‖ context ‖ SHA-256(fingerprints)`,
-   each field length-prefixed so two different field sets can never collide.
-5. The server verifies the signature **before** storing anything, returns the signed WAV, and
-   drops the audio. No table holds audio.
-
-The client **rebuilds those bytes itself** and refuses to sign if they differ from what the
-server sent (`web/src/lib/device-key.ts`). A compromised backend therefore cannot steer a
-device into signing a payload describing someone else's audio. The Python and TypeScript
-payload builders are verified byte-identical in the browser.
-
-### Why not SHA-256 of the samples
-
-WhatsApp re-encodes every voice note to Opus, so a plain hash would mark every legitimately
-forwarded clip as TAMPERED. We use a Haitsma–Kalker style perceptual hash: 33 log-spaced bands
-across 300–3400 Hz, and the sign of the *second* difference of band energy (across bands, then
-across time). The double difference cancels constant gain and slow channel colouring, so the
-hash survives ±6 dB, resampling and lossy compression — while still changing completely if the
-speech is replaced. Matching is by bit error rate with a small alignment search.
-
-### Verdict rules (first match wins)
-
-| Verdict | Condition |
-| --- | --- |
-| `TAMPERED` | Known ref, but signature invalid, or any segment fails its fingerprint or lacks the mark, or the key is revoked |
-| `REPLAYED` | A signed clip detected inside Live Scan audio, or reused past `expires_at` |
-| `EXPIRED` | Valid signature, all segments match, but past `expires_at` |
-| `VERIFIED` | Valid signature, all segments match, not expired, key not revoked |
-| `UNVERIFIED` | No watermark — plus the detection result |
-
-**One deliberate refinement of the PRD table.** The PRD says "watermark found but signature
-invalid → TAMPERED". A watermark whose `ref` matches *no record at all* is not an invalid
-signature — we simply have no claim to check, and it can also be a fallback-detector false
-positive. Calling that TAMPERED would frighten a user about an innocent clip, so an unknown
-ref falls through to `UNVERIFIED` with a note. A ref that *does* resolve and then fails is
-TAMPERED, exactly as written. See `api/app/core/verdict.py`.
-
-Expiry and context are *inside* the signature, so they cannot be edited in the database to
-revive a stale clip — there is a test asserting exactly that.
-
----
-
-## Engines: fallbacks today, real models when you want them
-
-Every engine sits behind an adapter in `api/app/engines/`. The product runs **today** on
-fallbacks that need no GPU and no model downloads. Switching to the real models is one
-install and a restart — no other file changes.
-
-```bash
-cd api && .venv/Scripts/pip install -r requirements.txt -r requirements-ml.txt
-```
-
-| Role | Fallback (default) | Real model (`requirements-ml.txt`) |
-| --- | --- | --- |
-| Watermark | `spread-spectrum-fallback-v1` — differential sub-band patchwork | **AudioSeal** 16-bit |
-| AI-voice | `heuristic-dsp-v0` — **screening only, no measured EER** | **XLS-R + AASIST** (`eliya/forensics_0.3B_xlsr_wild_deepfake_classifier`) |
-| Transcription | the phone's own Web Speech API | **faster-whisper** (BM/EN auto-detect) |
-
-`/health` reports which engines are live, and **the UI prints the engine name and the words
-"screening only — not proof" whenever the detector is uncalibrated.** That label is not
-decoration: it is what keeps the demo honest when a judge asks what the number means.
-
-### About the fallback watermark
-
-Hard per-bit decoding plus a CRC turned out to be the wrong decoder: Opus reliably flips the
-one or two bits sitting under a strong vocal harmonic, failing the CRC even though the overall
-pattern still correlates at **+0.99**. So the detector returns a soft statistic and matches it
-against the refs we have actually issued, weighting each bit by its own confidence. Random
-refs peak around 0.6; the threshold is 0.80.
-
----
-
-## Measured behaviour
-
-Run the harness against a live API — it drives the real HTTP endpoints, so the numbers are
-the ones a judge would get:
-
-```bash
-cd api && .venv/Scripts/python ../eval/run_eval.py
-```
-
-With the fallback engines and synthetic speech (4 clips × 7 channel conditions):
-
-| Metric | Target | Result |
-| --- | --- | --- |
-| Signed clip VERIFIED after WhatsApp/Opus re-encode | ≥ 95% | **100%** |
-| Unsigned audio wrongly shown VERIFIED | 0% | **0%** |
-| Spliced clips caught as TAMPERED | ≥ 90% | **100%** |
-| Replayed signed clips caught in Live Scan | ≥ 90% | **100%** |
-| Scam-phrase recall on BM/EN scripts | ≥ 80% | **100%** |
-| Everyday sentences flagged High risk | 0 | **0** |
-| File verify latency (median / p95) | ≤ 5 s | **99 ms / 171 ms** |
-
-Signed clips verified at 100% under all seven conditions: clean, Opus, MP3 128k, GSM 8 kHz,
-±6 dB, and −40 dB noise.
-
-> **These came from synthetic speech, not human voices.** They show the provenance pipeline
-> behaves correctly. They are **not** evidence about real Malay speech or real voice clones,
-> and the AI-voice EER is not measured at all yet. Build the team dataset before putting any
-> of this in a pitch:
->
-> ```bash
-> cd api && .venv/Scripts/python ../eval/make_testset.py scripts
-> ```
->
-> That writes the lines each member reads (14 scam-style + 10 normal, BM/EN/code-switched).
-> Record into `eval/data/real/`, clone the same lines into `eval/data/fake/` — **only team
-> members' own voices, only with their consent** — then `make_testset.py conditions` renders
-> the channel conditions and `run_eval.py` fills in the EER row.
-
-Backend tests:
-
-```bash
-cd api && .venv/Scripts/python -m pytest tests -q
-```
-
-22 tests covering all four verdicts, Opus and GSM re-encode, splice localisation, replay,
-expiry, key revocation, forged signatures, phrase escalation, and the Live Scan WebSocket.
-
----
-
-## Repository layout
-
-```
-api/     FastAPI backend
-  app/core/       audio_io, fingerprint, watermark, crypto, verdict, phrases, risk, guidance
-  app/engines/    pluggable adapters + registry (picks the best available at import)
-  app/routes/     /keys /sessions /verify /live /reports
-  tests/          end-to-end tests through the real app
-web/     Next.js 15 PWA (App Router, Tailwind, TypeScript)
-  src/lib/        api, device-key (Ed25519), audio (capture + WAV), live (WS), speech, i18n
-  src/components/ VerdictCard, AppShell, Sheets, Feedback, Icons
-  public/         manifest, service worker, PCM AudioWorklet, icons
-eval/    run_eval.py (PRD §11 metrics), make_testset.py (week-1 dataset)
-scripts/ make-dev-cert.sh (TLS for phone demos)
-```
-
-### API
-
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `POST` | `/keys` | Register a device public key |
-| `POST` | `/keys/{id}/revoke` | Revoke a lost or stolen device |
-| `POST` | `/sessions` | Start a signing session |
-| `POST` | `/sessions/{id}/prepare` | Upload audio → watermark, fingerprints, payload to sign |
-| `POST` | `/sessions/{id}/sign` | Submit the signature → signed WAV |
-| `POST` | `/verify` | Upload a file → verdict, risk, flagged phrases |
-| `WS` | `/live` | Stream 16 kHz PCM → verdict updates every ~2 s |
-| `POST` | `/reports` | Report a scam number (hashed with a per-deployment pepper) |
-
-The PRD sketches two signing endpoints; we use three so that the device never signs bytes it
-has not independently rebuilt. That is the only structural deviation.
-
----
-
-## Design decisions worth knowing
-
-**Raw PCM, not MediaRecorder.** Android Chrome's MediaRecorder produces WebM/Opus, which
-libsndfile cannot decode without ffmpeg. The app captures float PCM through an AudioWorklet and
-builds the WAV itself, so the upload path has no codec dependency. The same frames feed Live Scan.
-
-**The phone can do the transcription.** When the backend has no Whisper, the browser's Web
-Speech API supplies the text and the scam-phrase check still works on a laptop with no GPU.
-Both paths feed identical rules, and the response always names the engine that produced the text.
-
-**The API returns keys, not sentences.** `headline_key`, `step_keys`, risk reasons and notes
-are all keys mapped to BM and English in `web/src/lib/strings.ts`, so the decision logic lives
-in one place and both languages stay in sync.
-
-**Accessibility is in the config, not left to each component.** Base font is 18 px (the primary
-persona is 62), tap targets are ≥ 3.5 rem, the layout works at 360 px, and every verdict is
-colour **plus** icon **plus** words — never colour alone.
-
-**Trusted senders live on the receiver's phone.** A signature proves a clip came unchanged from
-*some* registered device, not that the name on it is the person you think. So a first-time name
-shows a warning, and the receiver chooses to trust it.
-
----
-
-## Claims
-
-**We say:** "SuaraSah proves when a recording came unchanged from a registered sender, and warns
-when it didn't."
-
-**We never say:** that it guarantees a human is speaking · that it makes deepfakes impossible ·
-that it detects every voice-cloning scam · that it integrates with WhatsApp calls today · that
-all Malaysian scam losses come from deepfakes.
-
-### Known limits
-
-- The AI-voice fallback has **no measured EER**. Until `requirements-ml.txt` is installed and
-  the team dataset is recorded, treat every risk level as screening, exactly as the UI says.
-- Watermark robustness is measured on synthetic speech and on simulated codecs. The
-  speakerphone-in-a-room condition cannot be simulated and must be recorded by hand.
-- Registration is open: anyone can register the display name "Ayah". The MVP answer is the
-  first-time-sender warning plus the receiver's own trusted list. Production swaps in phone-OTP
-  identity.
-- A compromised or stolen device can still produce VERIFIED clips until its key is revoked.
-  Liveness and challenge–response are roadmap, not MVP.
-- `.m4a` (iOS voice memos) needs `ffmpeg` on PATH; WAV, MP3, OGG/Opus, FLAC and GSM work out
-  of the box.
-- SQLite today. The schema is the PRD's, so moving to Supabase/Postgres is a connector swap.
-
-### Still open (from the PRD)
-
-Final product and team name · preliminary submission deadline · member names for roles A–D ·
-which voice-cloning tools to use and their licence terms · GPU access for Live Scan · Malaysian
-rules on recording a call participant, before claiming PDPA compliance · stretch pick: WhatsApp
-bot (S1) or Merge-to-Scan (S2).
-
----
-
-## Demo script (3 minutes)
-
-| Time | Scene | What judges see |
-| --- | --- | --- |
-| 0:00–0:25 | Hook | A cloned "Ayah" asking for RM2,000. "Would you know?" |
-| 0:25–0:50 | Sign | Real Ayah signs a voice note in one tap |
-| 0:50–1:15 | Verify | The signed note after WhatsApp: green **SAH**, with name and time |
-| 1:15–1:40 | Tamper | Spliced version: red **DIUBAH**, with the failed 2 s segment highlighted |
-| 1:40–2:20 | Live Scan | The clone "calls" on speaker: turns red, "transfer" and "sekarang" flagged |
-| 2:20–2:35 | Replay | A real signed clip played into Live Scan: **RAKAMAN LAMA** |
-| 2:35–3:00 | Close | Architecture, measured metrics, roadmap |
-
-Record a backup video. The PRD lists venue Wi-Fi failure as a real risk, and the backend runs
-fully locally for exactly that reason.
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for details.

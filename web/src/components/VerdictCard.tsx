@@ -6,7 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import type { Colour, PhraseHit, VerifyResult, Verdict } from "@/lib/types";
 import { isTrusted, trust } from "@/lib/trusted";
 
-import { CheckIcon, ClockIcon, CrossIcon, QuestionIcon, WarningIcon } from "./Icons";
+import { CheckIcon, ClockIcon, CrossIcon, QuestionIcon, ShieldIcon, WarningIcon } from "./Icons";
 
 const TONE: Record<Colour, { card: string; head: string; chip: string }> = {
   green: {
@@ -241,15 +241,29 @@ export function VerdictCard({ result, onReport }: { result: VerifyResult; onRepo
         </section>
       )}
 
-      <section className="space-y-1 border-t border-ink/10 dark:border-white/10 pt-4">
-        {result.detection && (
-          <EngineNote engine={result.detection.engine} calibrated={result.detection.calibrated} />
-        )}
-        <p className="text-xs text-ink/50 dark:text-slate-400">
-          {t("engineLabel")}: {result.provenance.watermark.engine} · {result.latency_ms} ms ·{" "}
-          {result.duration_s} s
-        </p>
-        <p className="text-xs text-ink/50 dark:text-slate-400">{t("privacyNote")}</p>
+      <section className="space-y-2 border-t border-ink/10 dark:border-white/10 pt-4">
+        <div className="rounded-xl border border-ink/10 dark:border-white/10 bg-slate-100/70 dark:bg-slate-900/50 p-3 text-xs text-ink/75 dark:text-slate-300">
+          <p className="flex items-center gap-1.5 font-semibold text-ink dark:text-slate-200">
+            <ShieldIcon className="h-3.5 w-3.5 text-brand dark:text-blue-400 shrink-0" />
+            <span>{t("disclaimerTitle")}</span>
+          </p>
+          <p className="mt-1 leading-relaxed text-ink/70 dark:text-slate-300">{t("disclaimerBody")}</p>
+        </div>
+
+        <details className="cursor-pointer text-[11px] text-ink/45 dark:text-slate-400">
+          <summary className="font-semibold select-none hover:text-ink/75 dark:hover:text-slate-200">
+            {t("technicalDetails")} ({result.latency_ms} ms)
+          </summary>
+          <div className="mt-1 space-y-0.5 font-mono">
+            {result.detection && (
+              <EngineNote engine={result.detection.engine} calibrated={result.detection.calibrated} />
+            )}
+            <p>
+              {t("engineLabel")}: {result.provenance.watermark.engine} · {result.latency_ms} ms ·{" "}
+              {result.duration_s} s
+            </p>
+          </div>
+        </details>
       </section>
     </div>
   );
