@@ -56,29 +56,7 @@ Every task is at most three taps from the home screen:
 
 ## 🏛️ System Architecture
 
-```mermaid
-flowchart TD
-    User["User Voice Note or Live Call"] --> WebApp["SilentVoice Frontend (Next.js PWA)"]
-    WebApp --> Backend["FastAPI Backend Engine"]
-
-    Backend --> Watermark["1. Watermark Detection (Spread-Spectrum)"]
-    Backend --> Hash["2. Perceptual Hashing (Haitsma-Kalker)"]
-    Backend --> AI["3. AI Voice Screening (Acoustic DSP)"]
-    Backend --> Phrases["4. Scam-Phrase Analysis (116 BM/EN Rules)"]
-
-    Watermark --> Provenance["Cryptographic Engine (Ed25519)"]
-    Hash --> Provenance
-
-    Provenance --> Decision{"Provenance Record Found?"}
-    Decision -->|"Valid Signature and Segment Match"| V1["VERIFIED"]
-    Decision -->|"Watermark Mismatch or Spliced"| V2["TAMPERED"]
-    Decision -->|"Replayed in Call or Stale"| V3["REPLAYED or EXPIRED"]
-    Decision -->|"No Digital Signature Found"| RiskFusion["Risk Fusion Engine"]
-
-    AI --> RiskFusion
-    Phrases --> RiskFusion
-    RiskFusion --> V4["UNVERIFIED (Low, Medium, or High Risk)"]
-```
+![SilentVoice Architecture](assets/architecture.svg)
 
 ```text
   [User Voice Note / Speaker Call]
@@ -105,7 +83,9 @@ The watermark carries **only a pointer (`ref`)**. Trust comes from a cryptograph
 2. **Session Issuance:** The server issues a session containing `session_id`, 128-bit `nonce`, `issued_at`, and `expires_at`.
 3. **Watermark Embedding First:** Audio is resampled to 16 kHz mono. The 16-bit `wm_ref` is **embedded first**, and only then is the audio divided into 2 s segments and fingerprinted. Fingerprinting the *watermarked* audio guarantees that the signed fingerprints describe the exact bytes the recipient receives.
 4. **Domain-Separated Canonical Payload:** The device signs:
-   $$\text{DOMAIN} \parallel \text{session\_id} \parallel \text{nonce} \parallel \text{issued\_at} \parallel \text{expires\_at} \parallel \text{context} \parallel \text{SHA-256}(\text{fingerprints})$$
+   ```text
+   DOMAIN ‖ session_id ‖ nonce ‖ issued_at ‖ expires_at ‖ context ‖ SHA-256(fingerprints)
+   ```
    Each field is length-prefixed so distinct field sets can never collide.
 5. **Zero-Audio Retention:** The server verifies the signature **before** persisting any metadata, returns the signed WAV, and immediately drops the audio buffer from RAM. No database table holds audio.
 6. **Client Payload Validation:** The client **reconstructs the exact canonical bytes itself** (`web/src/lib/device-key.ts`) and refuses to sign if they differ from what the server prepared. A compromised backend cannot trick a device into signing a payload for audio it did not record.
@@ -116,8 +96,8 @@ WhatsApp re-encodes every voice note to Opus, meaning a plain SHA-256 hash marks
 SilentVoice uses a **Haitsma–Kalker style perceptual hash**:
 - Computes energies across 33 log-spaced sub-bands between 300 Hz and 3400 Hz.
 - Takes the sign of the **second difference** of band energy (difference across adjacent bands, then difference across successive 2-second time windows).
-- The double difference cancels out constant gain variations ($\pm 6\text{ dB}$) and slow channel coloration, surviving lossy compression, resampling, and WhatsApp re-encoding — while altering dramatically if phonemes or words are replaced.
-- Verification uses bit error rate (BER) matching ($< 0.28$) with a local alignment search.
+- The double difference cancels out constant gain variations (±6 dB) and slow channel coloration, surviving lossy compression, resampling, and WhatsApp re-encoding — while altering dramatically if phonemes or words are replaced.
+- Verification uses bit error rate (BER) matching (< 0.28) with a local alignment search.
 
 ### 3. Verdict Decision Rules (First Match Wins)
 
@@ -154,7 +134,7 @@ cd api && pip install -r requirements.txt -r requirements-ml.txt
 ### Soft-Matched Fallback Watermark
 Standard hard per-bit decoding with a CRC fails under Opus compression because lossy codecs invert bits sitting directly under dominant vocal harmonics, destroying CRC validity even when sub-band pattern correlation remains at **+0.99**. 
 
-The SilentVoice fallback detector produces soft-decision correlation statistics and matches them against the pool of issued reference IDs, weighting each bit by its confidence score (issued refs correlate $> 0.80$; random unwatermarked audio peaks below $0.60$).
+The SilentVoice fallback detector produces soft-decision correlation statistics and matches them against the pool of issued reference IDs, weighting each bit by its confidence score (issued refs correlate > 0.80; random unwatermarked audio peaks below 0.60).
 
 ---
 
@@ -163,7 +143,7 @@ The SilentVoice fallback detector produces soft-decision correlation statistics 
 - **Raw PCM via AudioWorklet (No FFmpeg Needed):** Android Chrome's `MediaRecorder` outputs WebM/Opus, which `libsndfile` cannot decode without system `ffmpeg`. SilentVoice captures 32-bit float PCM via an `AudioWorklet` and constructs standard PCM WAV containers on the client, eliminating server-side transcoding bottlenecks.
 - **Client-Side Speech Recognition Fallback:** When running on servers without GPU acceleration, the browser's native Web Speech API provides real-time transcripts to feed the 116 BM/EN scam-phrase regex rules.
 - **Key-Driven Translations:** The API outputs structured keys (`headline_key`, `step_keys`, `risk.reason`), never hardcoded sentences. Keys map deterministically to BM and English dictionaries in `web/src/lib/strings.ts`.
-- **Accessibility Embedded in Design Tokens:** Baseline font is 18 px for elderly readability, interactive tap targets are $\ge 3.5\text{ rem}$ ($56\text{ px}$), layouts adapt down to $360\text{ px}$, and every verdict couples colour + shape icon + textual label.
+- **Accessibility Embedded in Design Tokens:** Baseline font is 18 px for elderly readability, interactive tap targets are ≥ 3.5 rem (56 px), layouts adapt down to 360 px, and every verdict couples colour + shape icon + textual label.
 - **Client-Side Trusted Sender List:** A digital signature proves a clip came unchanged from a registered public key, not that the display name is verified. First-time senders trigger a yellow warning until the recipient saves them as a trusted contact in device storage.
 
 ---
@@ -174,15 +154,15 @@ Evaluated against simulated channel conditions using the automated evaluation ha
 
 | Benchmark Metric | Target | Measured Result |
 | :--- | :---: | :---: |
-| Signed clip **VERIFIED** after WhatsApp / Opus re-encode | $\ge 95\%$ | **100%** |
-| Unsigned audio wrongly shown as **VERIFIED** | $0\%$ | **0.0%** |
-| Spliced clips caught as **TAMPERED** | $\ge 90\%$ | **100%** |
-| Replayed signed clips detected in Live Scan | $\ge 90\%$ | **100%** |
-| Scam-phrase recall across BM / EN scripts | $\ge 80\%$ | **100%** |
-| Everyday conversational false alarms | $0$ | **0** |
-| Audio verification latency (median / p95) | $\le 5\text{ s}$ | **99 ms / 171 ms** |
+| Signed clip **VERIFIED** after WhatsApp / Opus re-encode | ≥ 95% | **100%** |
+| Unsigned audio wrongly shown as **VERIFIED** | 0.0% | **0.0%** |
+| Spliced clips caught as **TAMPERED** | ≥ 90% | **100%** |
+| Replayed signed clips detected in Live Scan | ≥ 90% | **100%** |
+| Scam-phrase recall across BM / EN scripts | ≥ 80% | **100%** |
+| Everyday conversational false alarms | 0 | **0** |
+| Audio verification latency (median / p95) | ≤ 5 s | **99 ms / 171 ms** |
 
-*Verified under 7 degradation environments: clean 16 kHz, Opus 24 kbps, MP3 128 kbps, GSM 8 kHz telephony, $\pm 6\text{ dB}$ gain, and $-40\text{ dB}$ additive acoustic noise.*
+*Verified under 7 degradation environments: clean 16 kHz, Opus 24 kbps, MP3 128 kbps, GSM 8 kHz telephony, ±6 dB gain, and -40 dB additive acoustic noise.*
 
 ---
 

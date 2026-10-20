@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" width="100%" height="100%" style="background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="primaryCard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    
+    <!-- Drop Shadow Filter -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+
+    <!-- Arrow Marker -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrow-emerald" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 8 5 L 0 9 z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1000" height="620" fill="url(#bgGrad)"/>
+  
+  <!-- Outer Border -->
+  <rect x="10" y="10" width="980" height="600" rx="16" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- Title Badge -->
+  <g transform="translate(40, 35)">
+    <rect width="210" height="30" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+    <text x="105" y="20" fill="#94a3b8" font-size="12" font-weight="600" text-anchor="middle" letter-spacing="0.5">SYSTEM ARCHITECTURE</text>
+  </g>
+
+  <!-- 1. Source Node -->
+  <g transform="translate(330, 40)" filter="url(#shadow)">
+    <rect width="340" height="60" rx="12" fill="url(#primaryCard)" stroke="#3b82f6" stroke-width="1.5"/>
+    <circle cx="35" cy="30" r="14" fill="#1d4ed8"/>
+    <path d="M 31 24 L 39 30 L 31 36 Z" fill="#ffffff"/>
+    <text x="65" y="27" fill="#f8fafc" font-size="15" font-weight="700">User Voice Note / Speaker Call</text>
+    <text x="65" y="47" fill="#94a3b8" font-size="12">WhatsApp Opus • Audio File • Live Microphone</text>
+  </g>
+
+  <!-- Connector Line 1 -->
+  <path d="M 500 100 L 500 138" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 2. Frontend Node -->
+  <g transform="translate(300, 140)" filter="url(#shadow)">
+    <rect width="400" height="64" rx="12" fill="url(#primaryCard)" stroke="#6366f1" stroke-width="1.5"/>
+    <text x="200" y="29" fill="#f8fafc" font-size="16" font-weight="700" text-anchor="middle">SilentVoice Frontend (Next.js 15 PWA)</text>
+    <text x="200" y="50" fill="#a5b4fc" font-size="12" font-weight="500" text-anchor="middle">Bilingual (BM/EN) • Dark/Light Mode • WebCrypto Ed25519 Keys</text>
+  </g>
+
+  <!-- Connector Line 2 with Protocol Label -->
+  <path d="M 500 204 L 500 258" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="420" y="217" width="160" height="22" rx="4" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="500" y="232" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">HTTP / WebSocket (JSON+PCM)</text>
+
+  <!-- 3. Backend Engine Container -->
+  <g transform="translate(40, 260)" filter="url(#shadow)">
+    <rect width="460" height="315" rx="16" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+    <text x="25" y="32" fill="#38bdf8" font-size="16" font-weight="800">FastAPI Backend Engine (Python 3.11)</text>
+    
+    <!-- Service 1: Watermark Detection -->
+    <g transform="translate(20, 50)">
+      <rect width="420" height="52" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+      <circle cx="22" cy="26" r="10" fill="#0369a1"/>
+      <text x="22" y="30" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">1</text>
+      <text x="44" y="24" fill="#f1f5f9" font-size="13" font-weight="600">Watermark Detection</text>
+      <text x="44" y="42" fill="#94a3b8" font-size="11">Spread-Spectrum Fallback • 16-bit Ref Extraction</text>
+    </g>
+
+    <!-- Service 2: Perceptual Hashing -->
+    <g transform="translate(20, 114)">
+      <rect width="420" height="52" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+      <circle cx="22" cy="26" r="10" fill="#0369a1"/>
+      <text x="22" y="30" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">2</text>
+      <text x="44" y="24" fill="#f1f5f9" font-size="13" font-weight="600">Perceptual Hashing (Haitsma-Kalker)</text>
+      <text x="44" y="42" fill="#94a3b8" font-size="11">33 Sub-bands • 2s Second-Difference Energy Hash</text>
+    </g>
+
+    <!-- Service 3: AI Voice Screening -->
+    <g transform="translate(20, 178)">
+      <rect width="420" height="52" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+      <circle cx="22" cy="26" r="10" fill="#b45309"/>
+      <text x="22" y="30" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">3</text>
+      <text x="44" y="24" fill="#f1f5f9" font-size="13" font-weight="600">AI Voice Screening (Acoustic DSP)</text>
+      <text x="44" y="42" fill="#94a3b8" font-size="11">Heuristic DSP • Zero GPU • Synthetic Artifacts</text>
+    </g>
+
+    <!-- Service 4: Scam Phrase Rules -->
+    <g transform="translate(20, 242)">
+      <rect width="420" height="52" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+      <circle cx="22" cy="26" r="10" fill="#b45309"/>
+      <text x="22" y="30" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">4</text>
+      <text x="44" y="24" fill="#f1f5f9" font-size="13" font-weight="600">Scam-Phrase Analysis (116 Rules)</text>
+      <text x="44" y="42" fill="#94a3b8" font-size="11">Bilingual BM/EN Lexicons • Urgency &amp; Banking</text>
+    </g>
+  </g>
+
+  <!-- Connectors from Backend Services to Right-Hand Decision Engines -->
+  <!-- Branch A: Services 1 & 2 -> Provenance -->
+  <path d="M 460 336 L 560 336" stroke="#10b981" stroke-width="2"/>
+  <path d="M 460 400 L 560 400" stroke="#10b981" stroke-width="2"/>
+  <path d="M 560 336 L 560 368" stroke="#10b981" stroke-width="2"/>
+  <path d="M 560 400 L 560 368" stroke="#10b981" stroke-width="2"/>
+  <path d="M 560 368 L 598 368" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-emerald)"/>
+
+  <!-- Branch B: Services 3 & 4 -> Risk Fusion -->
+  <path d="M 460 464 L 560 464" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M 460 528 L 560 528" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M 560 464 L 560 496" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M 560 528 L 560 496" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M 560 496 L 598 496" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-amber)"/>
+
+  <!-- 4. Cryptographic Provenance Engine Node -->
+  <g transform="translate(600, 335)" filter="url(#shadow)">
+    <rect width="180" height="66" rx="10" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+    <text x="90" y="27" fill="#ecfdf5" font-size="13" font-weight="700" text-anchor="middle">Ed25519 Provenance</text>
+    <text x="90" y="48" fill="#a7f3d0" font-size="11" text-anchor="middle">Canonical Payload</text>
+  </g>
+
+  <!-- Connector Provenance -> Verified Badges -->
+  <path d="M 780 368 L 818 368" stroke="#10b981" stroke-width="2" marker-end="url(#arrow-emerald)"/>
+
+  <!-- Provenance Verdict Output Badges -->
+  <g transform="translate(820, 318)" filter="url(#shadow)">
+    <rect width="150" height="100" rx="10" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
+    
+    <rect x="10" y="10" width="130" height="18" rx="4" fill="#065f46"/>
+    <text x="75" y="23" fill="#6ee7b7" font-size="11" font-weight="800" text-anchor="middle">VERIFIED</text>
+    
+    <rect x="10" y="32" width="130" height="18" rx="4" fill="#7f1d1d"/>
+    <text x="75" y="45" fill="#fca5a5" font-size="11" font-weight="800" text-anchor="middle">TAMPERED</text>
+    
+    <rect x="10" y="54" width="130" height="18" rx="4" fill="#831843"/>
+    <text x="75" y="67" fill="#fbcfe8" font-size="11" font-weight="800" text-anchor="middle">REPLAYED</text>
+
+    <rect x="10" y="76" width="130" height="18" rx="4" fill="#374151"/>
+    <text x="75" y="89" fill="#d1d5db" font-size="11" font-weight="800" text-anchor="middle">EXPIRED</text>
+  </g>
+
+  <!-- 5. Risk Fusion Engine Node -->
+  <g transform="translate(600, 465)" filter="url(#shadow)">
+    <rect width="180" height="64" rx="10" fill="#78350f" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="90" y="27" fill="#fffbeb" font-size="13" font-weight="700" text-anchor="middle">Risk Fusion Engine</text>
+    <text x="90" y="48" fill="#fde68a" font-size="11" text-anchor="middle">Multimodal Heuristics</text>
+  </g>
+
+  <!-- Connector Risk Fusion -> Unverified Badges -->
+  <path d="M 780 497 L 818 497" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-amber)"/>
+
+  <!-- Unverified Output Badges -->
+  <g transform="translate(820, 455)" filter="url(#shadow)">
+    <rect width="150" height="84" rx="10" fill="#0f172a" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="75" y="22" fill="#fbbf24" font-size="12" font-weight="800" text-anchor="middle">UNVERIFIED</text>
+    <line x1="10" y1="30" x2="140" y2="30" stroke="#334155" stroke-width="1"/>
+    <text x="75" y="48" fill="#4ade80" font-size="11" font-weight="700" text-anchor="middle">● Low Risk</text>
+    <text x="75" y="63" fill="#facc15" font-size="11" font-weight="700" text-anchor="middle">● Med Risk</text>
+    <text x="75" y="77" fill="#f87171" font-size="11" font-weight="700" text-anchor="middle">● High Risk</text>
+  </g>
+
+</svg>
