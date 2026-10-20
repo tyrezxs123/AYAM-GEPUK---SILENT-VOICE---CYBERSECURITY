@@ -215,7 +215,7 @@ export default function SignPage() {
     <AppShell title={t("signTitle")}>
       {phase === "register" && (
         <div className="space-y-4">
-          <label className="block text-base font-semibold" htmlFor="display-name">
+          <label className="block text-base font-semibold text-ink dark:text-slate-100" htmlFor="display-name">
             {t("signName")}
           </label>
           <input
@@ -227,7 +227,7 @@ export default function SignPage() {
             autoComplete="name"
             maxLength={60}
           />
-          <p className="text-sm text-ink/60">{t("signNameHint")}</p>
+          <p className="text-sm text-ink/60 dark:text-slate-400">{t("signNameHint")}</p>
           <button
             type="button"
             className="primary-button"
@@ -241,13 +241,13 @@ export default function SignPage() {
 
       {phase === "idle" && device && (
         <div className="space-y-5">
-          <p className="flex items-center gap-2 text-base text-verdict-green">
+          <p className="flex items-center gap-2 text-base text-verdict-green dark:text-emerald-400">
             <CheckIcon className="h-5 w-5" />
             {t("deviceReady")}: <strong>{device.displayName}</strong>
           </p>
 
           <div>
-            <label className="block text-base font-semibold" htmlFor="context">
+            <label className="block text-base font-semibold text-ink dark:text-slate-100" htmlFor="context">
               {t("signContext")}
             </label>
             <input
@@ -261,17 +261,17 @@ export default function SignPage() {
           </div>
 
           <fieldset>
-            <legend className="text-base font-semibold">{t("signExpiry")}</legend>
+            <legend className="text-base font-semibold text-ink dark:text-slate-100">{t("signExpiry")}</legend>
             <div className="mt-2 flex gap-2">
               {EXPIRY_CHOICES.map((choice) => (
                 <button
                   key={choice.key}
                   type="button"
                   onClick={() => setExpiry(choice.seconds)}
-                  className={`flex-1 rounded-xl border-2 px-2 py-3 text-base font-semibold ${
+                  className={`flex-1 rounded-xl border-2 px-2 py-3 text-base font-semibold transition ${
                     expiry === choice.seconds
-                      ? "border-brand bg-brand-soft text-brand-dark"
-                      : "border-ink/15 text-ink/70"
+                      ? "border-brand bg-brand-soft text-brand-dark dark:border-blue-400 dark:bg-blue-950/60 dark:text-blue-300"
+                      : "border-ink/15 dark:border-white/15 text-ink/70 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }`}
                 >
                   {t(choice.key)}
@@ -284,7 +284,7 @@ export default function SignPage() {
             <MicIcon className="h-6 w-6" />
             {t("signRecord")}
           </button>
-          <p className="text-center text-sm text-ink/55">{t("maxSeconds")}</p>
+          <p className="text-center text-sm text-ink/55 dark:text-slate-400">{t("maxSeconds")}</p>
 
           <button type="button" className="secondary-button" onClick={() => fileInput.current?.click()}>
             <FileIcon className="h-6 w-6" />
@@ -301,7 +301,7 @@ export default function SignPage() {
             }}
           />
 
-          <button type="button" className="mt-2 text-sm text-verdict-red underline" onClick={revoke}>
+          <button type="button" className="mt-2 text-sm text-verdict-red dark:text-rose-400 underline" onClick={revoke}>
             {t("revokeDevice")}
           </button>
         </div>
@@ -319,7 +319,7 @@ export default function SignPage() {
       )}
 
       {phase === "signing" && (
-        <p className="py-10 text-center text-xl font-semibold text-ink/70">{t("signing")}</p>
+        <p className="py-10 text-center text-xl font-semibold text-ink/70 dark:text-slate-300">{t("signing")}</p>
       )}
 
       {phase === "error" && error && (
@@ -333,12 +333,12 @@ export default function SignPage() {
 
       {phase === "done" && signed && (
         <div className="space-y-4">
-          <div className="card border-verdict-green bg-verdict-greenbg">
-            <p className="flex items-center gap-2 text-xl font-bold text-verdict-green">
+          <div className="card border-verdict-green dark:border-emerald-500/50 bg-verdict-greenbg dark:bg-emerald-950/40">
+            <p className="flex items-center gap-2 text-xl font-bold text-verdict-green dark:text-emerald-400">
               <CheckIcon className="h-7 w-7" />
               {t("signed")}
             </p>
-            <p className="mt-2 text-base text-ink/80">{t("signedHint")}</p>
+            <p className="mt-2 text-base text-ink/80 dark:text-slate-200">{t("signedHint")}</p>
           </div>
 
           <audio className="w-full" controls src={signed.url} />

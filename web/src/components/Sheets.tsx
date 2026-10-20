@@ -13,11 +13,11 @@ function Sheet({ onClose, children }: { onClose: () => void; children: React.Rea
         type="button"
         aria-hidden
         tabIndex={-1}
-        className="absolute inset-0 bg-ink/45"
+        className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-xs"
         onClick={onClose}
       />
-      <div className="relative w-full rounded-t-3xl bg-white p-5 pb-8 shadow-2xl animate-rise">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-ink/15" />
+      <div className="relative w-full rounded-t-3xl border-t border-ink/10 dark:border-white/10 bg-white dark:bg-[#161c28] p-5 pb-8 shadow-2xl text-ink dark:text-slate-100 animate-rise">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-ink/15 dark:bg-white/20" />
         {children}
       </div>
     </div>
@@ -33,8 +33,8 @@ export function ConsentSheet({ onAccept, onCancel }: { onAccept: () => void; onC
   const { t } = useI18n();
   return (
     <Sheet onClose={onCancel}>
-      <h2 className="text-xl font-bold">{t("consentTitle")}</h2>
-      <p className="mt-3 text-base leading-relaxed text-ink/80">{t("consentBody")}</p>
+      <h2 className="text-xl font-bold text-ink dark:text-slate-100">{t("consentTitle")}</h2>
+      <p className="mt-3 text-base leading-relaxed text-ink/80 dark:text-slate-300">{t("consentBody")}</p>
       <div className="mt-5 space-y-3">
         <button type="button" className="primary-button" onClick={onAccept}>
           {t("consentAgree")}
@@ -67,13 +67,13 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
 
   return (
     <Sheet onClose={onClose}>
-      <h2 className="text-xl font-bold">{t("reportTitle")}</h2>
+      <h2 className="text-xl font-bold text-ink dark:text-slate-100">{t("reportTitle")}</h2>
 
       {state === "done" ? (
-        <p className="mt-3 text-base text-verdict-green">{t("reportThanks")}</p>
+        <p className="mt-3 text-base text-verdict-green dark:text-emerald-400">{t("reportThanks")}</p>
       ) : (
         <>
-          <label className="mt-4 block text-sm font-semibold text-ink/70" htmlFor="report-number">
+          <label className="mt-4 block text-sm font-semibold text-ink/75 dark:text-slate-300" htmlFor="report-number">
             {t("reportNumber")}
           </label>
           <input
@@ -94,7 +94,7 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
           >
             {t("reportSend")}
           </button>
-          {state === "error" && <p className="mt-2 text-base text-verdict-red">{t("offline")}</p>}
+          {state === "error" && <p className="mt-2 text-base text-verdict-red dark:text-rose-400">{t("offline")}</p>}
         </>
       )}
 
@@ -102,7 +102,7 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
         href={SEMAK_MULE}
         target="_blank"
         rel="noreferrer noopener"
-        className="mt-4 block text-center text-base font-semibold text-brand underline"
+        className="mt-4 block text-center text-base font-semibold text-brand dark:text-blue-400 hover:underline"
       >
         {t("semakMule")}
       </a>

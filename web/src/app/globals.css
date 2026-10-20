@@ -10,7 +10,7 @@
   }
 
   body {
-    @apply bg-white text-ink antialiased;
+    @apply bg-slate-50 text-ink dark:bg-[#0c1017] dark:text-slate-100 antialiased;
     font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
       Arial, "Noto Sans", sans-serif;
     /* never let a verdict card sit under the notch or the home indicator */
@@ -27,7 +27,7 @@
   }
 
   :focus-visible {
-    @apply outline-none ring-4 ring-brand/40 rounded-lg;
+    @apply outline-none ring-4 ring-brand/40 dark:ring-blue-500/40 rounded-lg;
   }
 }
 
@@ -38,27 +38,27 @@
 
   .big-button {
     @apply flex w-full items-center gap-4 rounded-2xl border-2 px-5 py-5 text-left
-           transition active:scale-[0.985];
+           transition active:scale-[0.985] shadow-sm;
     min-height: theme("spacing.tap");
   }
 
   .primary-button {
-    @apply flex w-full items-center justify-center gap-3 rounded-2xl bg-brand px-5 py-4
+    @apply flex w-full items-center justify-center gap-3 rounded-2xl bg-brand hover:bg-brand-dark px-5 py-4
            text-lg font-semibold text-white shadow-sm transition
            active:scale-[0.985] disabled:opacity-50 disabled:active:scale-100;
     min-height: theme("spacing.tap");
   }
 
   .secondary-button {
-    @apply flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-ink/15
-           bg-white px-5 py-4 text-lg font-semibold text-ink transition
-           active:scale-[0.985] disabled:opacity-50;
+    @apply flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-ink/15 dark:border-white/15
+           bg-white dark:bg-[#161c28] px-5 py-4 text-lg font-semibold text-ink dark:text-slate-100 transition
+           hover:bg-slate-100 dark:hover:bg-[#1f2738] active:scale-[0.985] disabled:opacity-50;
     min-height: theme("spacing.tap");
   }
 
   .field {
-    @apply w-full rounded-xl border-2 border-ink/15 bg-white px-4 py-3 text-base
-           placeholder:text-ink/35 focus:border-brand focus:outline-none;
+    @apply w-full rounded-xl border-2 border-ink/15 dark:border-white/15 bg-white dark:bg-[#161c28] px-4 py-3 text-base
+           text-ink dark:text-slate-100 placeholder:text-ink/35 dark:placeholder:text-slate-400 focus:border-brand dark:focus:border-blue-400 focus:outline-none;
     min-height: 3rem;
   }
 
@@ -67,7 +67,7 @@
   }
 
   .card {
-    @apply rounded-2xl border-2 p-5;
+    @apply rounded-2xl border-2 p-5 bg-white dark:bg-[#161c28];
   }
 }
 

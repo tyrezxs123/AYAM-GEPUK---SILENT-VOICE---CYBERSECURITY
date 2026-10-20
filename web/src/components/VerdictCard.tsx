@@ -10,24 +10,24 @@ import { CheckIcon, ClockIcon, CrossIcon, QuestionIcon, WarningIcon } from "./Ic
 
 const TONE: Record<Colour, { card: string; head: string; chip: string }> = {
   green: {
-    card: "border-verdict-green bg-verdict-greenbg",
-    head: "text-verdict-green",
-    chip: "bg-verdict-green text-white",
+    card: "border-verdict-green dark:border-emerald-500/50 bg-verdict-greenbg dark:bg-emerald-950/40 text-ink dark:text-slate-100",
+    head: "text-verdict-green dark:text-emerald-400",
+    chip: "bg-verdict-green dark:bg-emerald-600 text-white",
   },
   red: {
-    card: "border-verdict-red bg-verdict-redbg",
-    head: "text-verdict-red",
-    chip: "bg-verdict-red text-white",
+    card: "border-verdict-red dark:border-rose-500/50 bg-verdict-redbg dark:bg-rose-950/40 text-ink dark:text-slate-100",
+    head: "text-verdict-red dark:text-rose-400",
+    chip: "bg-verdict-red dark:bg-rose-600 text-white",
   },
   orange: {
-    card: "border-verdict-orange bg-verdict-orangebg",
-    head: "text-verdict-orange",
-    chip: "bg-verdict-orange text-white",
+    card: "border-verdict-orange dark:border-amber-500/50 bg-verdict-orangebg dark:bg-amber-950/40 text-ink dark:text-slate-100",
+    head: "text-verdict-orange dark:text-amber-400",
+    chip: "bg-verdict-orange dark:bg-amber-600 text-white",
   },
   grey: {
-    card: "border-verdict-grey/40 bg-verdict-greybg",
-    head: "text-verdict-grey",
-    chip: "bg-verdict-grey text-white",
+    card: "border-verdict-grey/40 dark:border-slate-700 bg-verdict-greybg dark:bg-slate-900/60 text-ink dark:text-slate-100",
+    head: "text-verdict-grey dark:text-slate-300",
+    chip: "bg-verdict-grey dark:bg-slate-700 text-white",
   },
 };
 
@@ -58,10 +58,10 @@ export function PhraseChips({ phrases }: { phrases: PhraseHit[] }) {
   for (const hit of phrases) if (!seen.has(hit.phrase)) seen.set(hit.phrase, hit);
 
   const tone: Record<PhraseHit["group"], string> = {
-    money: "bg-verdict-red/10 text-verdict-red",
-    urgency: "bg-verdict-orange/10 text-verdict-orange",
-    secrecy: "bg-purple-100 text-purple-800",
-    authority: "bg-blue-100 text-blue-900",
+    money: "bg-verdict-red/10 text-verdict-red dark:bg-rose-950/50 dark:text-rose-300",
+    urgency: "bg-verdict-orange/10 text-verdict-orange dark:bg-amber-950/50 dark:text-amber-300",
+    secrecy: "bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300",
+    authority: "bg-blue-100 text-blue-900 dark:bg-blue-950/50 dark:text-blue-300",
   };
 
   return (
@@ -87,7 +87,7 @@ export function TranscriptView({ text, phrases }: { text: string; phrases: Phras
     if (hit.start < at) continue;
     if (hit.start > at) parts.push(<span key={`plain-${i}`}>{text.slice(at, hit.start)}</span>);
     parts.push(
-      <mark key={`hit-${i}`} className="rounded bg-yellow-200 px-0.5 font-semibold text-ink">
+      <mark key={`hit-${i}`} className="rounded bg-yellow-200 dark:bg-yellow-500/30 px-0.5 font-semibold text-ink dark:text-yellow-200">
         {text.slice(hit.start, hit.end)}
       </mark>,
     );
@@ -95,7 +95,7 @@ export function TranscriptView({ text, phrases }: { text: string; phrases: Phras
   }
   parts.push(<span key="tail">{text.slice(at)}</span>);
 
-  return <p className="text-base leading-relaxed text-ink/85">{parts}</p>;
+  return <p className="text-base leading-relaxed text-ink/85 dark:text-slate-200">{parts}</p>;
 }
 
 /** Which 2 s segments failed, as a strip - the TAMPERED evidence. */
@@ -178,25 +178,25 @@ export function VerdictCard({ result, onReport }: { result: VerifyResult; onRepo
       </section>
 
       {/* Next steps: the part that actually protects the user */}
-      <section className="card border-ink/15 bg-white">
+      <section className="card border-ink/15 dark:border-white/10 bg-white dark:bg-[#161c28]">
         <ol className="space-y-3">
           {result.step_keys.map((key, i) => (
             <li key={key} className="flex gap-3">
-              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand-dark">
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft dark:bg-blue-950/60 text-sm font-bold text-brand-dark dark:text-blue-300">
                 {i + 1}
               </span>
-              <span className="text-base leading-snug">{tKey("step", key)}</span>
+              <span className="text-base leading-snug text-ink/90 dark:text-slate-200">{tKey("step", key)}</span>
             </li>
           ))}
         </ol>
 
         {result.verdict === "VERIFIED" && sender && (
-          <div className="mt-4 border-t border-ink/10 pt-4">
+          <div className="mt-4 border-t border-ink/10 dark:border-white/10 pt-4">
             {trusted ? (
-              <p className="text-base font-semibold text-verdict-green">✓ {t("trustedSender")}</p>
+              <p className="text-base font-semibold text-verdict-green dark:text-emerald-400">✓ {t("trustedSender")}</p>
             ) : (
               <>
-                <p className="mb-3 text-base text-ink/75">{t("newSender")}</p>
+                <p className="mb-3 text-base text-ink/75 dark:text-slate-300">{t("newSender")}</p>
                 <button
                   type="button"
                   className="secondary-button"
@@ -223,33 +223,33 @@ export function VerdictCard({ result, onReport }: { result: VerifyResult; onRepo
 
       {result.phrases && result.phrases.length > 0 && (
         <section className="space-y-2">
-          <p className="text-sm font-bold uppercase tracking-wide text-ink/55">{t("liveFlagged")}</p>
+          <p className="text-sm font-bold uppercase tracking-wide text-ink/60 dark:text-slate-400">{t("liveFlagged")}</p>
           <PhraseChips phrases={result.phrases} />
         </section>
       )}
 
       {result.transcript && (
         <section className="space-y-2">
-          <p className="text-sm font-bold uppercase tracking-wide text-ink/55">
+          <p className="text-sm font-bold uppercase tracking-wide text-ink/60 dark:text-slate-400">
             {t("transcriptLabel")}
           </p>
           {result.transcript.text ? (
             <TranscriptView text={result.transcript.text} phrases={result.phrases ?? []} />
           ) : (
-            <p className="text-base text-ink/55">{t("noTranscript")}</p>
+            <p className="text-base text-ink/55 dark:text-slate-400">{t("noTranscript")}</p>
           )}
         </section>
       )}
 
-      <section className="space-y-1 border-t border-ink/10 pt-4">
+      <section className="space-y-1 border-t border-ink/10 dark:border-white/10 pt-4">
         {result.detection && (
           <EngineNote engine={result.detection.engine} calibrated={result.detection.calibrated} />
         )}
-        <p className="text-xs text-ink/50">
+        <p className="text-xs text-ink/50 dark:text-slate-400">
           {t("engineLabel")}: {result.provenance.watermark.engine} · {result.latency_ms} ms ·{" "}
           {result.duration_s} s
         </p>
-        <p className="text-xs text-ink/50">{t("privacyNote")}</p>
+        <p className="text-xs text-ink/50 dark:text-slate-400">{t("privacyNote")}</p>
       </section>
     </div>
   );

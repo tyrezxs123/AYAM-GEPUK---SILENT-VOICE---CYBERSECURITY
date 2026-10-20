@@ -6,11 +6,12 @@ import { useEffect, useState } from "react";
 import { health } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import type { Engines } from "@/lib/types";
+import { HeaderControls } from "@/components/HeaderControls";
 import { FileIcon, PenIcon, WaveIcon } from "@/components/Icons";
 
 /** Home screen: three buttons, nothing else. Every task is <= 3 taps from here. */
 export default function Home() {
-  const { t, lang, toggle } = useI18n();
+  const { t } = useI18n();
   const [engines, setEngines] = useState<Engines | null>(null);
   const [offline, setOffline] = useState(false);
 
@@ -26,40 +27,35 @@ export default function Home() {
       label: t("homeVerify"),
       sub: t("homeVerifySub"),
       icon: <FileIcon className="h-8 w-8" />,
-      tone: "border-brand bg-brand-soft text-brand-dark",
+      tone: "border-brand bg-brand-soft text-brand-dark dark:border-blue-500/40 dark:bg-blue-950/40 dark:text-blue-300",
     },
     {
       href: "/live",
       label: t("homeLive"),
       sub: t("homeLiveSub"),
       icon: <WaveIcon className="h-8 w-8" />,
-      tone: "border-verdict-orange bg-verdict-orangebg text-verdict-orange",
+      tone: "border-verdict-orange bg-verdict-orangebg text-verdict-orange dark:border-amber-500/40 dark:bg-amber-950/40 dark:text-amber-300",
     },
     {
       href: "/sign",
       label: t("homeSign"),
       sub: t("homeSignSub"),
       icon: <PenIcon className="h-8 w-8" />,
-      tone: "border-verdict-green bg-verdict-greenbg text-verdict-green",
+      tone: "border-verdict-green bg-verdict-greenbg text-verdict-green dark:border-emerald-500/40 dark:bg-emerald-950/40 dark:text-emerald-300",
     },
   ];
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="min-h-dvh bg-slate-50 dark:bg-[#0c1017] text-ink dark:text-slate-100 transition-colors duration-200">
       <div className="screen pt-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-brand-dark">{t("appName")}</h1>
-            <p className="mt-1 text-base text-ink/70">{t("tagline")}</p>
+            <h1 className="text-3xl font-extrabold tracking-tight text-brand-dark dark:text-blue-400">
+              {t("appName")}
+            </h1>
+            <p className="mt-1 text-base text-ink/70 dark:text-slate-300">{t("tagline")}</p>
           </div>
-          <button
-            type="button"
-            onClick={toggle}
-            aria-label={t("langSwitch")}
-            className="h-12 shrink-0 rounded-xl border-2 border-ink/15 px-3 text-sm font-bold uppercase text-ink/75 active:bg-ink/5"
-          >
-            {lang === "ms" ? "EN" : "BM"}
-          </button>
+          <HeaderControls />
         </div>
 
         <nav className="mt-7 space-y-4">
@@ -68,18 +64,24 @@ export default function Home() {
               <span className="shrink-0">{b.icon}</span>
               <span className="min-w-0">
                 <span className="block text-xl font-bold leading-tight">{b.label}</span>
-                <span className="block text-base leading-snug text-ink/65">{b.sub}</span>
+                <span className="block text-base leading-snug text-ink/70 dark:text-slate-300">
+                  {b.sub}
+                </span>
               </span>
             </Link>
           ))}
         </nav>
 
-        <p className="mt-8 rounded-xl bg-ink/5 p-4 text-base leading-snug text-ink/70">
+        <p className="mt-8 rounded-2xl border border-ink/10 dark:border-white/10 bg-white dark:bg-[#161c28] p-4 text-base leading-snug text-ink/75 dark:text-slate-300 shadow-xs">
           {t("homeFooter")}
         </p>
 
-        <footer className="mt-6 space-y-1 text-xs text-ink/45">
-          {offline && <p className="text-verdict-red">{t("offline")} {t("apiHint")}</p>}
+        <footer className="mt-6 space-y-1 text-xs text-ink/50 dark:text-slate-400">
+          {offline && (
+            <p className="text-verdict-red dark:text-red-400">
+              {t("offline")} {t("apiHint")}
+            </p>
+          )}
           {engines && (
             <>
               <p>

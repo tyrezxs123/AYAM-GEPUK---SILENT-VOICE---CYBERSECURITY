@@ -15,10 +15,10 @@ import type { Colour, LiveUpdate } from "@/lib/types";
 type Phase = "consent" | "starting" | "scanning" | "stopped" | "error";
 
 const TONE: Record<Colour, string> = {
-  green: "border-verdict-green bg-verdict-greenbg text-verdict-green",
-  red: "border-verdict-red bg-verdict-redbg text-verdict-red",
-  orange: "border-verdict-orange bg-verdict-orangebg text-verdict-orange",
-  grey: "border-verdict-grey/40 bg-verdict-greybg text-verdict-grey",
+  green: "border-verdict-green dark:border-emerald-500/50 bg-verdict-greenbg dark:bg-emerald-950/40 text-verdict-green dark:text-emerald-400",
+  red: "border-verdict-red dark:border-rose-500/50 bg-verdict-redbg dark:bg-rose-950/40 text-verdict-red dark:text-rose-400",
+  orange: "border-verdict-orange dark:border-amber-500/50 bg-verdict-orangebg dark:bg-amber-950/40 text-verdict-orange dark:text-amber-400",
+  grey: "border-verdict-grey/40 dark:border-slate-700 bg-verdict-greybg dark:bg-slate-900/60 text-verdict-grey dark:text-slate-300",
 };
 
 function StatusIcon({ update }: { update: LiveUpdate | null }) {
@@ -132,19 +132,19 @@ export default function LivePage() {
               <span className="text-2xl font-extrabold tracking-tight">{verdictWord}</span>
             </div>
 
-            <p className="mt-3 text-lg font-semibold leading-snug text-ink">
+            <p className="mt-3 text-lg font-semibold leading-snug text-ink dark:text-slate-100">
               {update ? tKey("head", update.headline_key) : t("liveWaiting")}
             </p>
 
             {update?.alert && (
-              <p className="mt-3 flex items-start gap-2 text-lg font-bold text-verdict-red">
+              <p className="mt-3 flex items-start gap-2 text-lg font-bold text-verdict-red dark:text-rose-400">
                 <PhoneOffIcon className="mt-0.5 h-6 w-6 shrink-0" />
                 {t("liveRedAlert")}
               </p>
             )}
 
             {update && (
-              <ol className="mt-3 space-y-1.5 text-base text-ink/85">
+              <ol className="mt-3 space-y-1.5 text-base text-ink/85 dark:text-slate-200">
                 {update.step_keys.map((key) => (
                   <li key={key}>• {tKey("step", key)}</li>
                 ))}
@@ -155,7 +155,7 @@ export default function LivePage() {
           {phase !== "stopped" && (
             <>
               <LevelMeter level={level} />
-              <p className="text-center text-sm text-ink/50">
+              <p className="text-center text-sm text-ink/60 dark:text-slate-400">
                 {update ? `${update.elapsed_s}s · ${update.latency_ms} ms` : t("liveWaiting")}
               </p>
             </>
@@ -163,7 +163,7 @@ export default function LivePage() {
 
           {update && update.phrases.length > 0 && (
             <section className="space-y-2">
-              <p className="text-sm font-bold uppercase tracking-wide text-ink/55">
+              <p className="text-sm font-bold uppercase tracking-wide text-ink/60 dark:text-slate-400">
                 {t("liveFlagged")}
               </p>
               <PhraseChips
@@ -173,7 +173,7 @@ export default function LivePage() {
           )}
 
           {!asrOn && phase === "scanning" && (
-            <p className="text-sm text-ink/50">{t("noTranscript")}</p>
+            <p className="text-sm text-ink/50 dark:text-slate-400">{t("noTranscript")}</p>
           )}
 
           {phase === "stopped" ? (

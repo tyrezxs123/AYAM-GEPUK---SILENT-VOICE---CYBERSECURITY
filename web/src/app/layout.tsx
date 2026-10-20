@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 
+import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 import { ServiceWorker } from "@/components/ServiceWorker";
 
@@ -32,12 +33,31 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ms-MY">
-      <body>
-        <I18nProvider>
-          {children}
-          <ServiceWorker />
-        </I18nProvider>
+    <html lang="ms-MY" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var theme = localStorage.getItem('suarasah.theme');
+                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (theme === 'dark' || (theme !== 'light' && prefersDark)) {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="bg-slate-50 text-ink dark:bg-[#0c1017] dark:text-slate-100 transition-colors duration-200">
+        <ThemeProvider>
+          <I18nProvider>
+            {children}
+            <ServiceWorker />
+          </I18nProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

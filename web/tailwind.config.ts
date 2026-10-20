@@ -6,6 +6,7 @@ import type { Config } from "tailwindcss";
  * travel with an icon and a word.
  */
 const config: Config = {
+  darkMode: "class",
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {

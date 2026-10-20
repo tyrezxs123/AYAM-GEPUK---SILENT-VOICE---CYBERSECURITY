@@ -15,6 +15,11 @@ const ms = {
   tagline: "Jangan percaya suara. Sahkan asalnya.",
   langName: "English",
   langSwitch: "Tukar ke English",
+  themeLight: "Cerah",
+  themeDark: "Gelap",
+  themeToggle: "Tukar mod tema",
+  langBM: "BM",
+  langEN: "ENG",
 
   // home
   homeVerify: "Semak Audio",
@@ -172,6 +177,11 @@ const en: Record<keyof typeof ms, string> = {
   tagline: "Don't trust the voice. Verify its origin.",
   langName: "Bahasa Melayu",
   langSwitch: "Switch to Bahasa Melayu",
+  themeLight: "Light",
+  themeDark: "Dark",
+  themeToggle: "Toggle theme mode",
+  langBM: "BM",
+  langEN: "ENG",
 
   homeVerify: "Verify Audio",
   homeVerifySub: "A voice note or an audio file",

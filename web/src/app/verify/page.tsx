@@ -127,7 +127,7 @@ export default function VerifyPage() {
     <AppShell title={t("verifyTitle")}>
       {phase === "idle" && (
         <div className="space-y-4">
-          <p className="text-base text-ink/70">{t("verifyHint")}</p>
+          <p className="text-base text-ink/75 dark:text-slate-300">{t("verifyHint")}</p>
 
           <button type="button" className="primary-button" onClick={() => fileInput.current?.click()}>
             <FileIcon className="h-6 w-6" />
@@ -150,7 +150,7 @@ export default function VerifyPage() {
 
       {phase === "recording" && (
         <div className="space-y-6">
-          <p className="text-base text-ink/70">{t("liveHint")}</p>
+          <p className="text-base text-ink/75 dark:text-slate-300">{t("liveHint")}</p>
           <Timer seconds={seconds} max={RECORD_LIMIT_SECONDS} />
           <LevelMeter level={level} />
           <button type="button" className="primary-button" onClick={stopRecord}>
