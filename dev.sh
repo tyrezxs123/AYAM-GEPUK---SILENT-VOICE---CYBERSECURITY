@@ -98,7 +98,7 @@ echo "API -> ${SCHEME}://${BIND}:${API_PORT}"
 echo "Web -> ${SCHEME}://${BIND}:${WEB_PORT}"
 echo
 
-( cd "$root/api" && "$python_bin" -m uvicorn app.main:app --host "$BIND" --port "$API_PORT" --reload "${API_EXTRA_ARGS[@]}" ) &
+( cd "$root/api" && "$python_bin" -m uvicorn app.main:app --host "$BIND" --port "$API_PORT" --reload ${API_EXTRA_ARGS[@]+"${API_EXTRA_ARGS[@]}"} ) &
 ( cd "$root/web" && npm run "$WEB_SCRIPT" ) &
 
 if [ "$LAN" = true ]; then
