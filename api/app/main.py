@@ -1,6 +1,6 @@
-"""SuaraSah API.
+"""SilentVoice API.
 
-    uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 
 Run order of the three engines is fixed in service.py: provenance, then
 AI-voice detection, then scam phrases. Detection never runs on audio that
@@ -45,10 +45,33 @@ app = FastAPI(
     ),
 )
 
+# Private network (RFC 1918 + loopback) origin regex to safely permit local phone demos
+# without exposing the API to public arbitrary websites on the internet.
+CORS_LAN_REGEX = (
+    r"^https?://(localhost|127\.0\.0\.1|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|"
+    r"172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}|"
+    r"192\.168\.\d{1,3}\.\d{1,3})(:\d+)?$"
+)
+
+if config.CORS_ALLOW_ALL:
+    log.warning(
+        "SECURITY WARNING: SUARASAH_CORS_ALL=1 is enabled. All origins ('*') are permitted! "
+        "Do not run with this setting on untrusted or public/campus networks."
+    )
+    cors_kwargs = {
+        "allow_origins": ["*"],
+        "allow_credentials": False,
+    }
+else:
+    cors_kwargs = {
+        "allow_origins": config.CORS_ORIGINS,
+        "allow_origin_regex": CORS_LAN_REGEX,
+        "allow_credentials": True,
+    }
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if config.CORS_ALLOW_ALL else config.CORS_ORIGINS,
-    allow_credentials=not config.CORS_ALLOW_ALL,
+    **cors_kwargs,
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-SuaraSah-Session", "X-SuaraSah-Segments", "Content-Disposition"],

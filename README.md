@@ -221,20 +221,30 @@ npm install
 
 ### 3. Start Development Services
 
+> **Security Note:** By default, development servers bind strictly to `127.0.0.1` (localhost only) to protect your machine from unauthorized access on shared campus or hackathon Wi-Fi networks.
+
 **macOS / Linux:**
 ```bash
+# Secure localhost mode (default)
 ./dev.sh
+
+# Or LAN mode for mobile phone testing
+./dev.sh --lan
 ```
 
 **Windows (PowerShell):**
 ```powershell
-./dev.ps1
+# Secure localhost mode (default)
+.\dev.ps1
+
+# Or LAN mode for mobile phone testing
+.\dev.ps1 -Lan
 ```
 
 Or manually:
 ```bash
-# Terminal 1: API
-cd api && .venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# Terminal 1: API (localhost only)
+cd api && .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 
 # Terminal 2: Web
 cd web && npm run dev
@@ -254,18 +264,33 @@ Microphone access (`getUserMedia`) requires a **secure context** (HTTPS or local
    ```bash
    bash scripts/make-dev-cert.sh
    ```
-2. Start in HTTPS mode:
+2. Start in HTTPS LAN mode:
    ```bash
-   ./dev.ps1 -Https
+   # macOS / Linux
+   ./dev.sh --lan --https
+
+   # Windows
+   .\dev.ps1 -Lan -Https
    ```
 3. On your phone, navigate to `https://<laptop-ip>:8000/health` **first** and accept the browser certificate warning.
 4. Open `https://<laptop-ip>:3000` to run the full PWA with microphone access.
 
 ---
 
+## 🛡️ Network Security & Public Wi-Fi Best Practices
+
+When running development servers in shared environments (such as university campuses, coffee shops, or hackathons):
+
+1. **Localhost Isolation by Default:** Both `dev.sh` and `dev.ps1` bind strictly to `127.0.0.1`. Never expose `0.0.0.0` unless actively demoing on a mobile device via the `--lan` / `-Lan` flag.
+2. **Public Network Firewall Profile:** On Windows and macOS, ensure your active Wi-Fi connection is configured as **Public Network** so the OS firewall silently drops unsolicited inbound connections on ports `8000` and `3000`.
+3. **Restricted CORS Policy:** Avoid setting `SUARASAH_CORS_ALL=1` on public networks, as it allows arbitrary websites on the internet to issue cross-origin requests to your local API. SilentVoice's backend natively authorizes private RFC 1918 subnets (`192.168.0.0/16`, `10.0.0.0/8`, `172.16.0.0/12`) and `localhost` without wildcarding public origins.
+4. **Clean Server Shutdown:** Stop server processes immediately after your demo finishes by pressing `Ctrl+C`. The runner scripts automatically terminate all background uvicorn and Next.js child processes to prevent orphaned listeners.
+
+---
+
 ## 🧪 Automated Testing
 
-Execute the comprehensive test suite (22 unit & integration tests covering signature verification, WhatsApp codec survival, splice detection, live call replay, and key revocation):
+Execute the comprehensive test suite (26 unit, integration, and security tests covering signature verification, WhatsApp codec survival, splice detection, live call replay, CORS origin boundaries, and key revocation):
 
 ```bash
 cd api
