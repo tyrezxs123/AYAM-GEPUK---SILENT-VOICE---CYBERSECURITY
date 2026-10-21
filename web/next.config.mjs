@@ -1,9 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: "export",
+  images: { unoptimized: true },
   // The phone needs to reach the API over the venue LAN, so the base URL is
   // resolved at runtime in src/lib/api.ts rather than baked in at build time.
-  async headers() {
+  /* async headers() {
     return [
       {
         source: "/sw.js",
@@ -13,7 +15,7 @@ const nextConfig = {
         ],
       },
     ];
-  },
+  }, */
 };
 
 export default nextConfig;
