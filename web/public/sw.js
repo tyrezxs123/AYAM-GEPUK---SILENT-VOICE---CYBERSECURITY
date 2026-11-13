@@ -5,7 +5,7 @@
  * Verification itself needs the backend, so API calls are never cached - a
  * cached verdict would be a dangerous lie.
  */
-const CACHE = "suarasah-shell-v1";
+const CACHE = "suarasah-shell-v2";
 const SHELL = ["/", "/verify", "/live", "/sign", "/manifest.webmanifest", "/pcm-worklet.js"];
 
 self.addEventListener("install", (event) => {

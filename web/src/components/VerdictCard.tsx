@@ -176,12 +176,6 @@ export function VerdictCard({ result, onReport }: { result: VerifyResult; onRepo
           </p>
         )}
 
-        {result.offline_screening && (
-          <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-950/40 p-2.5 text-xs text-amber-900 dark:text-amber-300">
-            <p className="font-semibold">⚠️ {t("offlineModeNotice")}</p>
-            <p className="mt-0.5 opacity-90">{t("offlineModeDesc")}</p>
-          </div>
-        )}
       </section>
 
       {/* Next steps: the part that actually protects the user */}

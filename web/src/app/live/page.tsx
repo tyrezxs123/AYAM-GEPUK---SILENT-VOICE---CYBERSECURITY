@@ -42,7 +42,6 @@ export default function LivePage() {
   const [showReport, setShowReport] = useState(false);
   const [showServerSettings, setShowServerSettings] = useState(false);
   const [asrOn, setAsrOn] = useState(false);
-  const [isLocalMode, setIsLocalMode] = useState(false);
 
   const scan = useRef<LiveScan | null>(null);
   const localMic = useRef<MicHandle | null>(null);
@@ -81,7 +80,6 @@ export default function LivePage() {
   }, []);
 
   function startLocalLiveScan() {
-    setIsLocalMode(true);
     localStartTime.current = Date.now();
     localTranscript.current = "";
 
@@ -137,8 +135,10 @@ export default function LivePage() {
       setAsrOn(true);
       speech.current = startSpeech(lang === "ms" ? "ms-MY" : "en-MY", (text, isFinal) => {
         if (!text.trim()) return;
-        localTranscript.current += ` ${text}`;
-        const analysis = scanPhrases(localTranscript.current);
+        // Interim results are re-sent as they grow; only commit finals.
+        const heard = `${localTranscript.current} ${text}`;
+        if (isFinal) localTranscript.current = heard;
+        const analysis = scanPhrases(heard);
         const hasScam = analysis.hits.length > 0;
         const isRed =
           analysis.score >= 0.7 ||
@@ -217,7 +217,7 @@ export default function LivePage() {
         },
         detection: { engine: "device-live-simulator", calibrated: true, window_score: 0.45 },
         phrases: [
-          { phrase: "pindah wang", group: "money", lang: "bm" },
+          { phrase: "pindah duit", group: "money", lang: "bm" },
           { phrase: "segera", group: "urgency", lang: "bm" },
         ],
         replayed: false,
@@ -311,7 +311,6 @@ export default function LivePage() {
     setError(null);
     setUpdate(null);
     lastAlert.current = false;
-    setIsLocalMode(false);
 
     // On standalone PWA / Netlify deployment without external backend, run local scan directly
     const base = apiBase();
@@ -395,22 +394,6 @@ export default function LivePage() {
 
       {(phase === "starting" || phase === "scanning" || phase === "stopped") && (
         <div className="space-y-4 sm:space-y-5">
-          {isLocalMode && (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-950/40 p-2.5 text-xs text-amber-900 dark:text-amber-300 flex items-center justify-between">
-              <div>
-                <p className="font-semibold">⚠️ {t("liveLocalMode")}</p>
-                <p className="mt-0.5 opacity-90">{t("liveLocalDesc")}</p>
-              </div>
-              <button
-                type="button"
-                className="underline text-xs ml-2 shrink-0 font-bold"
-                onClick={() => setShowServerSettings(true)}
-              >
-                {t("serverSettings")}
-              </button>
-            </div>
-          )}
-
           <section className={`card ${tone}`} aria-live="polite">
             <div className="flex items-center gap-2.5 sm:gap-3">
               <StatusIcon update={update} />

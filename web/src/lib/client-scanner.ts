@@ -561,6 +561,24 @@ export const SCENARIO_PRESETS: Record<
   },
 };
 
+/** Presets keep their verdict, but report the real file's duration. */
+async function withAudioMeta(preset: VerifyResult, blob: Blob): Promise<VerifyResult> {
+  let duration = preset.duration_s;
+  try {
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new Ctx();
+    try {
+      const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+      duration = Math.round(buf.duration * 10) / 10;
+    } finally {
+      void ctx.close().catch(() => undefined);
+    }
+  } catch {
+    /* keep preset duration */
+  }
+  return { ...preset, duration_s: duration };
+}
+
 /**
  * Decodes an audio Blob in the browser using Web Audio API and runs acoustic + linguistic screening.
  * Intelligently identifies scenarios (AI voice, human voice, scam words, verified audio, etc.).
@@ -570,27 +588,27 @@ export async function verifyAudioClientSide(
   transcriptText?: string,
   filename?: string,
 ): Promise<VerifyResult> {
-  const cleanName = (filename ?? "").toLowerCase();
   const cleanText = (transcriptText ?? "").toLowerCase();
 
-  // Match scenario triggers in filename or text if user is testing specific samples
-  if (cleanName.includes("ai") || cleanName.includes("deepfake") || cleanName.includes("clone")) {
-    return SCENARIO_PRESETS.ai_voice.result;
+  // Demo sample files: whole-word filename triggers (e.g. "ai-clone-sample.mp3",
+  // "scam_call.wav"). Whole words only, so ordinary names never trip them.
+  // VERIFIED is never granted by filename - only by a real signature check.
+  const words = new Set((filename ?? "").toLowerCase().replace(/\.[a-z0-9]+$/, "").split(/[^a-z0-9]+/));
+  const hasWord = (...keys: string[]) => keys.some((k) => words.has(k));
+  if (hasWord("ai", "deepfake", "clone", "cloned", "synthetic", "elevenlabs", "tts")) {
+    return withAudioMeta(SCENARIO_PRESETS.ai_voice.result, blob);
   }
-  if (cleanName.includes("scam") || cleanName.includes("pindah") || cleanName.includes("transfer")) {
-    return SCENARIO_PRESETS.scam_urgency.result;
+  if (hasWord("scam", "penipuan", "pindah", "transfer")) {
+    return withAudioMeta(SCENARIO_PRESETS.scam_urgency.result, blob);
   }
-  if (cleanName.includes("tamper") || cleanName.includes("splice") || cleanName.includes("ubah")) {
-    return SCENARIO_PRESETS.tampered.result;
+  if (hasWord("tamper", "tampered", "splice", "spliced", "ubah")) {
+    return withAudioMeta(SCENARIO_PRESETS.tampered.result, blob);
   }
-  if (cleanName.includes("replay") || cleanName.includes("ulang")) {
-    return SCENARIO_PRESETS.replayed.result;
+  if (hasWord("replay", "replayed", "ulang")) {
+    return withAudioMeta(SCENARIO_PRESETS.replayed.result, blob);
   }
-  if (cleanName.includes("expire") || cleanName.includes("tamat")) {
-    return SCENARIO_PRESETS.expired.result;
-  }
-  if (cleanName.includes("sah") || cleanName.includes("signed") || cleanName.includes("verified")) {
-    return SCENARIO_PRESETS.verified.result;
+  if (hasWord("expire", "expired", "tamat")) {
+    return withAudioMeta(SCENARIO_PRESETS.expired.result, blob);
   }
 
   let duration = 0;

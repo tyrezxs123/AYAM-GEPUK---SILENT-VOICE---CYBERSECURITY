@@ -6,9 +6,10 @@ import { AppShell } from "@/components/AppShell";
 import { ErrorBox, LevelMeter, Timer } from "@/components/Feedback";
 import { CheckIcon, DownloadIcon, FileIcon, MicIcon, ShareIcon, StopIcon } from "@/components/Icons";
 import { ServerSettingsSheet } from "@/components/Sheets";
-import { createSession, prepareSession, registerKey, revokeKey, signSession } from "@/lib/api";
+import { registerKey, revokeKey } from "@/lib/api";
 import { startRecording, type Recording } from "@/lib/audio";
-import { getIdentity, sameBytes, signingPayload } from "@/lib/device-key";
+import { getIdentity } from "@/lib/device-key";
+import { makeTamperedCopy, signOnDevice } from "@/lib/provenance";
 import { useI18n } from "@/lib/i18n";
 
 type Phase = "register" | "idle" | "recording" | "signing" | "done" | "error";
@@ -41,6 +42,7 @@ function saveDevice(device: Device): void {
 }
 
 const EXPIRY_CHOICES = [
+  { key: "expiry_2m", seconds: 120 },
   { key: "expiry_1d", seconds: 24 * 3600 },
   { key: "expiry_7d", seconds: 7 * 24 * 3600 },
   { key: "expiry_30d", seconds: 30 * 24 * 3600 },
@@ -58,6 +60,7 @@ export default function SignPage() {
   const [error, setError] = useState<string | null>(null);
   const [signed, setSigned] = useState<{ blob: Blob; url: string; filename: string } | null>(null);
   const [showServerSettings, setShowServerSettings] = useState(false);
+  const [tampered, setTampered] = useState<{ url: string; filename: string } | null>(null);
 
   const recording = useRef<Recording | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -110,33 +113,15 @@ export default function SignPage() {
     setError(null);
     try {
       const identity = await getIdentity();
-      const session = await createSession({
-        device_key_id: device.deviceKeyId,
+      // Signed fully on this phone: the WAV carries its own Ed25519 proof,
+      // so the receiver can verify it with no server at all.
+      const clip = await signOnDevice(audio, identity, {
+        sender: device.displayName,
         context: context.trim(),
-        expiry_seconds: expiry,
+        expirySeconds: expiry,
       });
-      const prepared = await prepareSession(session.session_id, audio);
-
-      const payload = signingPayload({
-        sessionId: session.session_id,
-        nonceHex: session.nonce,
-        issuedAt: session.issued_at,
-        expiresAt: session.expires_at,
-        context: session.context,
-        fingerprintRoot: prepared.fingerprint_root,
-      });
-      if (prepared.payload_hex) {
-        const fromServer = new Uint8Array(
-          prepared.payload_hex.match(/.{2}/g)?.map((b) => parseInt(b, 16)) ?? [],
-        );
-        if (!sameBytes(payload, fromServer)) {
-          throw new Error("Signing payload mismatch — refused to sign.");
-        }
-      }
-
-      const signature = await identity.sign(payload);
-      const blob = await signSession(session.session_id, signature, audio);
-      const filename = `suarasah-${device.displayName.replace(/\s+/g, "-").toLowerCase()}-verified.wav`;
+      const blob = clip.blob;
+      const filename = `suarasah-${device.displayName.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-${clip.sessionId.slice(-6)}.wav`;
       setSigned({ blob, url: URL.createObjectURL(blob), filename });
       setPhase("done");
     } catch (err) {
@@ -195,8 +180,25 @@ export default function SignPage() {
     setError(null);
     setSeconds(0);
     setSigned(null);
+    setTampered(null);
     setPhase(device ? "idle" : "register");
     if (fileInput.current) fileInput.current.value = "";
+  }
+
+  async function createTampered() {
+    if (!signed) return;
+    try {
+      const blob = await makeTamperedCopy(signed.blob);
+      const filename = signed.filename.replace(/\.wav$/, "-edited.wav");
+      const url = URL.createObjectURL(blob);
+      setTampered({ url, filename });
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
   }
 
   async function share() {
@@ -378,6 +380,21 @@ export default function SignPage() {
           <button type="button" className="secondary-button" onClick={reset}>
             {t("signAnother")}
           </button>
+
+          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 dark:bg-rose-950/20 p-3 sm:p-4 space-y-2">
+            <p className="text-xs sm:text-sm font-bold text-rose-700 dark:text-rose-300">✂️ {t("tamperDemoTitle")}</p>
+            <p className="text-xs text-ink/70 dark:text-slate-300 leading-relaxed">{t("tamperDemoBody")}</p>
+            {tampered ? (
+              <a className="secondary-button" href={tampered.url} download={tampered.filename}>
+                <DownloadIcon className="h-5 w-5 shrink-0" />
+                <span className="truncate">{tampered.filename}</span>
+              </a>
+            ) : (
+              <button type="button" className="secondary-button" onClick={createTampered}>
+                <span>{t("tamperDemoButton")}</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 

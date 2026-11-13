@@ -11,6 +11,7 @@ import { apiBase, verifyAudio } from "@/lib/api";
 import { startRecording, type Recording } from "@/lib/audio";
 import { SCENARIO_PRESETS, type ScenarioType, verifyAudioClientSide } from "@/lib/client-scanner";
 import { useI18n } from "@/lib/i18n";
+import { verifyOnDevice } from "@/lib/provenance";
 import { speechSupported, startSpeech, type SpeechSession } from "@/lib/speech";
 import type { VerifyResult } from "@/lib/types";
 
@@ -58,6 +59,22 @@ export default function VerifyPage() {
     setError(null);
     const text = transcript.current.trim();
 
+    // 1. Signed clip? Verify its embedded Ed25519 signature right here on the phone.
+    try {
+      const [signedOut] = await Promise.all([
+        verifyOnDevice(blob),
+        new Promise((r) => setTimeout(r, 1400)), // let the stepper show its stages
+      ]);
+      if (signedOut) {
+        setResult(signedOut);
+        setPhase("done");
+        if (signedOut.colour === "red" && "vibrate" in navigator) navigator.vibrate?.([120, 60, 120]);
+        return;
+      }
+    } catch (err) {
+      console.warn("On-device signature check failed:", err);
+    }
+
     const base = apiBase();
     if (base) {
       try {
@@ -77,8 +94,7 @@ export default function VerifyPage() {
 
     // Direct, instant client-side verification on Netlify / offline
     try {
-      // Allow stepper stages (Memeriksa tandatangan -> Mengimbas suara -> Memeriksa perkataan) to advance
-      await new Promise((r) => setTimeout(r, 1200));
+      await new Promise((r) => setTimeout(r, 600));
       const clientOut = await verifyAudioClientSide(blob, text, filename);
       setResult(clientOut);
       setPhase("done");
