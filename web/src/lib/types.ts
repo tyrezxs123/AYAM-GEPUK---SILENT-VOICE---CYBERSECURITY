@@ -57,6 +57,14 @@ export interface VerifyResult {
   transcript?: { text: string; language: string; engine: string; available: boolean };
   phrases?: PhraseHit[];
   offline_screening?: boolean;
+  /** True for canned demo samples: nothing was analysed. The UI must label these. */
+  simulated?: boolean;
+  /** Normalised peak values (0..1) for drawing the clip's waveform. */
+  waveform?: number[];
+  /** How the audio reached us. Speaker-to-microphone audio weakens the acoustic screen. */
+  source?: "file" | "mic";
+  /** Details of the on-device acoustic screen. */
+  voice?: { enough_speech: boolean; speech_seconds: number };
 }
 
 export interface SessionOut {

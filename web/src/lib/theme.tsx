@@ -64,7 +64,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      metaThemeColor.setAttribute("content", resolvedTheme === "dark" ? "#0b0f19" : "#1b4ddb");
+      metaThemeColor.setAttribute("content", resolvedTheme === "dark" ? "#090d15" : "#f3f5fa");
     }
   }, [mounted, resolvedTheme]);
 

@@ -1,24 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { apiBase, getSavedApiBase, health, reportNumber, setSavedApiBase } from "@/lib/api";
+import { explicitApiBase, health, reportNumber, setSavedApiBase } from "@/lib/api";
+import { asrModel, asrSupported, warmUpAsr } from "@/lib/asr";
+import { clearHistory, listHistory } from "@/lib/history";
 import { useI18n } from "@/lib/i18n";
-import { ServerIcon } from "./Icons";
+import { listTrusted, untrust, type TrustedSender } from "@/lib/trusted";
+
+import { CheckIcon, CrossIcon, TrashIcon } from "./Icons";
 
 /** Bottom sheet shell: thumb-reachable on a phone, dismissible by backdrop tap. */
 function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end" role="dialog" aria-modal="true">
-      <button
-        type="button"
-        aria-hidden
-        tabIndex={-1}
-        className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-xs"
-        onClick={onClose}
-      />
-      <div className="relative w-full rounded-t-3xl border-t border-ink/10 dark:border-white/10 bg-white dark:bg-[#161c28] p-5 pb-8 shadow-2xl text-ink dark:text-slate-100 animate-rise">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-ink/15 dark:bg-white/20" />
+    <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true">
+      <button type="button" aria-hidden tabIndex={-1} className="absolute inset-0 bg-black/55 backdrop-blur-[2px]" onClick={onClose} />
+      <div
+        className="relative max-h-[88dvh] w-full max-w-md animate-sheet overflow-y-auto rounded-t-[28px] bg-surface p-5 text-ink shadow-2xl dark:bg-surface-dark dark:text-slate-100"
+        style={{ paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom))" }}
+      >
+        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-ink/15 dark:bg-white/20" />
         {children}
       </div>
     </div>
@@ -34,8 +46,8 @@ export function ConsentSheet({ onAccept, onCancel }: { onAccept: () => void; onC
   const { t } = useI18n();
   return (
     <Sheet onClose={onCancel}>
-      <h2 className="text-xl font-bold text-ink dark:text-slate-100">{t("consentTitle")}</h2>
-      <p className="mt-3 text-base leading-relaxed text-ink/80 dark:text-slate-300">{t("consentBody")}</p>
+      <h2 className="text-xl font-extrabold tracking-tight">{t("consentTitle")}</h2>
+      <p className="mt-3 text-base leading-relaxed text-ink/75 dark:text-slate-300">{t("consentBody")}</p>
       <div className="mt-5 space-y-3">
         <button type="button" className="primary-button" onClick={onAccept}>
           {t("consentAgree")}
@@ -53,33 +65,32 @@ const SEMAK_MULE = "https://semakmule.rmp.gov.my/";
 export function ReportSheet({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
   const [number, setNumber] = useState("");
-  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [state, setState] = useState<"idle" | "sending" | "done">("idle");
 
   async function send() {
     if (number.trim().length < 6) return;
     setState("sending");
-    try {
-      await reportNumber(number.trim());
-      setState("done");
-    } catch {
-      setState("error");
-    }
+    await reportNumber(number.trim());
+    setState("done");
   }
 
   return (
     <Sheet onClose={onClose}>
-      <h2 className="text-xl font-bold text-ink dark:text-slate-100">{t("reportTitle")}</h2>
+      <h2 className="text-xl font-extrabold tracking-tight">{t("reportTitle")}</h2>
 
       {state === "done" ? (
-        <p className="mt-3 text-base text-verdict-green dark:text-emerald-400">{t("reportThanks")}</p>
+        <p className="mt-4 flex items-start gap-2 rounded-2xl bg-verdict-greenbg p-4 text-base font-semibold text-verdict-green dark:bg-emerald-500/10 dark:text-emerald-400">
+          <CheckIcon className="mt-0.5 h-5 w-5 shrink-0" />
+          <span>{t("reportThanks")}</span>
+        </p>
       ) : (
         <>
-          <label className="mt-4 block text-sm font-semibold text-ink/75 dark:text-slate-300" htmlFor="report-number">
+          <label className="mt-4 block text-sm font-bold text-ink/70 dark:text-slate-300" htmlFor="report-number">
             {t("reportNumber")}
           </label>
           <input
             id="report-number"
-            className="field mt-1"
+            className="field mt-1.5"
             type="tel"
             inputMode="tel"
             autoComplete="off"
@@ -87,15 +98,9 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
             value={number}
             onChange={(e) => setNumber(e.target.value)}
           />
-          <button
-            type="button"
-            className="primary-button mt-4"
-            disabled={state === "sending" || number.trim().length < 6}
-            onClick={send}
-          >
+          <button type="button" className="primary-button mt-4" disabled={state === "sending" || number.trim().length < 6} onClick={send}>
             {t("reportSend")}
           </button>
-          {state === "error" && <p className="mt-2 text-base text-verdict-red dark:text-rose-400">{t("offline")}</p>}
         </>
       )}
 
@@ -103,153 +108,168 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
         href={SEMAK_MULE}
         target="_blank"
         rel="noreferrer noopener"
-        className="mt-4 block text-center text-base font-semibold text-brand dark:text-blue-400 hover:underline"
+        className="mt-4 block text-center text-base font-bold text-brand hover:underline dark:text-blue-400"
       >
-        {t("semakMule")}
+        {t("semakMule")} ↗
       </a>
     </Sheet>
   );
 }
 
-export function ServerSettingsSheet({
-  onClose,
-  onSaved,
-}: {
-  onClose: () => void;
-  onSaved?: () => void;
-}) {
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-3">
+      <span className="min-w-0 text-base font-semibold">{label}</span>
+      <div className="shrink-0">{children}</div>
+    </div>
+  );
+}
+
+/** Settings: what is stored on this phone, the speech model, and the optional server. */
+export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
-  const [url, setUrl] = useState(() => getSavedApiBase() ?? apiBase());
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [trusted, setTrusted] = useState<TrustedSender[]>([]);
+  const [historyCount, setHistoryCount] = useState(0);
+  const [model, setModel] = useState<{ state: "idle" | "loading" | "ready" | "failed"; pct: number }>({ state: "idle", pct: 0 });
+  const [url, setUrl] = useState("");
+  const [test, setTest] = useState<"idle" | "testing" | "ok" | "fail">("idle");
 
-  async function testConnection(targetUrl: string) {
-    setTesting(true);
-    setTestResult(null);
-    try {
-      const res = await health(targetUrl);
-      if (res.ok) {
-        setTestResult({ ok: true, message: t("serverConnected") });
-      } else {
-        setTestResult({ ok: false, message: t("serverFailed") });
-      }
-    } catch (err) {
-      setTestResult({
-        ok: false,
-        message: `${t("serverFailed")}: ${err instanceof Error ? err.message : String(err)}`,
-      });
-    } finally {
-      setTesting(false);
-    }
+  useEffect(() => {
+    setTrusted(listTrusted());
+    setHistoryCount(listHistory().length);
+    setUrl(explicitApiBase() ?? "");
+  }, []);
+
+  async function loadModel() {
+    setModel({ state: "loading", pct: 0 });
+    const ok = await warmUpAsr((p) => setModel({ state: "loading", pct: p.total ? p.loaded / p.total : 0 }));
+    setModel({ state: ok ? "ready" : "failed", pct: 1 });
   }
 
-  function save() {
-    setSavedApiBase(url.trim());
-    onSaved?.();
-    onClose();
-  }
-
-  function reset() {
-    setSavedApiBase(null);
-    setUrl(apiBase());
-    setTestResult(null);
-    onSaved?.();
-    onClose();
+  async function testServer() {
+    setTest("testing");
+    const res = await health(url.trim());
+    setTest(res.ok ? "ok" : "fail");
   }
 
   return (
     <Sheet onClose={onClose}>
-      <div className="flex items-center gap-2.5">
-        <ServerIcon className="h-6 w-6 text-brand dark:text-blue-400" />
-        <h2 className="text-xl font-bold text-ink dark:text-slate-100">{t("serverSettingsTitle")}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-extrabold tracking-tight">{t("settings")}</h2>
+        <button type="button" className="icon-button" aria-label={t("close")} onClick={onClose}>
+          <CrossIcon className="h-5 w-5" />
+        </button>
       </div>
 
-      <p className="mt-2 text-sm text-ink/70 dark:text-slate-300">
-        {t("serverSettingsHint")}
-      </p>
+      <section className="mt-4">
+        <p className="eyebrow">{t("settingsTrusted")}</p>
+        {trusted.length === 0 ? (
+          <p className="mt-2 text-sm text-ink/55 dark:text-slate-400">{t("settingsTrustedEmpty")}</p>
+        ) : (
+          <ul className="mt-1 divide-y divide-ink/[0.07] dark:divide-white/10">
+            {trusted.map((s) => (
+              <li key={s.name} className="flex items-center justify-between gap-3 py-2.5">
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-verdict-greenbg text-sm font-extrabold text-verdict-green dark:bg-emerald-500/15 dark:text-emerald-400">
+                    {s.name.slice(0, 1).toUpperCase()}
+                  </span>
+                  <span className="truncate text-base font-semibold">{s.name}</span>
+                </span>
+                <button
+                  type="button"
+                  className="icon-button text-verdict-red dark:text-rose-400"
+                  aria-label={t("remove")}
+                  onClick={() => {
+                    untrust(s.name);
+                    setTrusted(listTrusted());
+                  }}
+                >
+                  <TrashIcon className="h-5 w-5" strokeWidth={2} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-      <div className="mt-4 space-y-3">
-        <div>
-          <label className="block text-sm font-semibold text-ink/80 dark:text-slate-200" htmlFor="server-url">
-            {t("serverUrlLabel")}
-          </label>
-          <input
-            id="server-url"
-            type="url"
-            className="field mt-1 w-full text-sm font-mono"
-            placeholder={t("serverUrlPlaceholder")}
-            value={url}
-            onChange={(e) => {
-              setUrl(e.target.value);
-              setTestResult(null);
-            }}
-          />
-        </div>
-
-        {/* Quick helpers */}
-        <div className="flex flex-wrap gap-1.5 pt-1">
+      <section className="mt-5 divide-y divide-ink/[0.07] border-y border-ink/[0.07] dark:divide-white/10 dark:border-white/10">
+        <Row label={`${t("settingsHistory")} (${historyCount})`}>
           <button
             type="button"
-            className="rounded-lg border border-ink/15 dark:border-white/15 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-ink/75 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+            disabled={historyCount === 0}
+            className="rounded-xl bg-ink/[0.06] px-3.5 py-2 text-sm font-bold disabled:opacity-40 dark:bg-white/10"
             onClick={() => {
-              const lan = `http://${typeof window !== "undefined" ? window.location.hostname : "127.0.0.1"}:8000`;
-              setUrl(lan);
-              void testConnection(lan);
+              clearHistory();
+              setHistoryCount(0);
             }}
           >
-            LAN :8000
+            {t("settingsClear")}
+          </button>
+        </Row>
+
+        {asrSupported() && (
+          <div className="py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-base font-semibold">{t("settingsModel")}</p>
+                <p className="mt-0.5 text-xs text-ink/55 dark:text-slate-400">{t("settingsModelHint")}</p>
+              </div>
+              <button
+                type="button"
+                disabled={model.state === "loading" || model.state === "ready"}
+                className="shrink-0 rounded-xl bg-ink/[0.06] px-3.5 py-2 text-sm font-bold disabled:opacity-60 dark:bg-white/10"
+                onClick={loadModel}
+              >
+                {model.state === "ready"
+                  ? `✓ ${t("settingsModelReady")}`
+                  : model.state === "loading"
+                    ? `${Math.round(model.pct * 100)}%`
+                    : model.state === "failed"
+                      ? t("retry")
+                      : t("settingsModelLoad")}
+              </button>
+            </div>
+            {model.state === "loading" && (
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink/10 dark:bg-white/10">
+                <div className="h-full rounded-full bg-brand transition-all dark:bg-blue-400" style={{ width: `${Math.max(4, model.pct * 100)}%` }} />
+              </div>
+            )}
+            <p className="mt-1.5 font-mono text-[11px] text-ink/40 dark:text-slate-500">{asrModel()}</p>
+          </div>
+        )}
+      </section>
+
+      <details className="mt-4">
+        <summary className="cursor-pointer select-none text-sm font-bold text-ink/60 dark:text-slate-400">{t("settingsAdvanced")}</summary>
+        <p className="mt-2 text-sm text-ink/60 dark:text-slate-400">{t("serverSettingsHint")}</p>
+        <input
+          type="url"
+          className="field mt-2 font-mono text-sm"
+          placeholder={t("serverUrlPlaceholder")}
+          value={url}
+          onChange={(e) => {
+            setUrl(e.target.value);
+            setTest("idle");
+          }}
+        />
+        <div className="mt-2 flex gap-2">
+          <button type="button" className="secondary-button !min-h-0 flex-1 !py-2.5 text-sm" disabled={!url.trim() || test === "testing"} onClick={testServer}>
+            {test === "testing" ? t("serverTesting") : test === "ok" ? `✓ ${t("serverConnected")}` : test === "fail" ? t("serverFailed") : t("serverTestBtn")}
           </button>
           <button
             type="button"
-            className="rounded-lg border border-ink/15 dark:border-white/15 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-ink/75 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+            className="primary-button !min-h-0 flex-1 !py-2.5 text-sm !shadow-none"
             onClick={() => {
-              setUrl("http://127.0.0.1:8000");
-              void testConnection("http://127.0.0.1:8000");
+              setSavedApiBase(url.trim() || null);
+              onClose();
             }}
           >
-            127.0.0.1:8000
-          </button>
-        </div>
-
-        {/* Test Connection Button & Status */}
-        <div className="pt-2">
-          <button
-            type="button"
-            className="secondary-button !min-h-[2.75rem] !py-2 text-sm"
-            disabled={testing || !url.trim()}
-            onClick={() => testConnection(url.trim())}
-          >
-            {testing ? t("serverTesting") : t("serverTestBtn")}
-          </button>
-
-          {testResult && (
-            <p
-              className={`mt-2 rounded-xl p-2.5 text-xs font-semibold ${
-                testResult.ok
-                  ? "bg-verdict-greenbg text-verdict-green dark:bg-emerald-950/40 dark:text-emerald-400 border border-verdict-green/30"
-                  : "bg-verdict-redbg text-verdict-red dark:bg-rose-950/40 dark:text-rose-400 border border-verdict-red/30"
-              }`}
-            >
-              {testResult.ok ? "✓ " : "⚠️ "}
-              {testResult.message}
-            </p>
-          )}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-2 pt-3">
-          <button type="button" className="primary-button !min-h-[2.75rem] !py-2.5 text-sm flex-1" onClick={save}>
             {t("serverSaveBtn")}
           </button>
-          <button
-            type="button"
-            className="secondary-button !min-h-[2.75rem] !py-2.5 text-sm shrink-0 px-4"
-            onClick={reset}
-          >
-            {t("serverResetBtn")}
-          </button>
         </div>
-      </div>
+      </details>
+
+      <p className="mt-5 text-center text-xs text-ink/40 dark:text-slate-500">{t("settingsAbout")}</p>
     </Sheet>
   );
 }

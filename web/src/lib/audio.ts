@@ -1,9 +1,9 @@
 /**
  * Microphone capture and WAV encoding, both done by hand.
  *
- * We ask the browser for a 16 kHz AudioContext (the rate the whole backend
+ * We ask the browser for a 16 kHz AudioContext (the rate every analysis step
  * works at). Most browsers honour it; when one does not, we resample in the
- * main thread so the server always receives 16 kHz mono.
+ * main thread so downstream code always sees 16 kHz mono.
  */
 export const TARGET_RATE = 16000;
 
@@ -49,7 +49,7 @@ export function floatToPcm16(x: Float32Array): Int16Array {
   return out;
 }
 
-/** 16-bit PCM WAV. The backend reads this with no codec dependency at all. */
+/** 16-bit PCM WAV, written by hand so there is no codec dependency at all. */
 export function encodeWav(samples: Float32Array, rate = TARGET_RATE): Blob {
   const pcm = floatToPcm16(samples);
   const buffer = new ArrayBuffer(44 + pcm.length * 2);
@@ -84,30 +84,43 @@ export interface MicHandle {
   level(): number;
 }
 
+export interface MicOptions {
+  /**
+   * Browser voice processing (echo cancellation, noise suppression, auto gain).
+   * Off by default: the acoustic screen needs the room's real noise floor, and
+   * noise suppression is exactly what erases it.
+   */
+  processing?: boolean;
+}
+
 /**
  * Opens the microphone and calls `onFrame` with 16 kHz mono float frames.
- * Echo cancellation and noise suppression are left ON: the user is pointing
- * this phone at another phone's speaker, so the room is the signal path.
+ * Uses an AudioWorklet where available and falls back to a ScriptProcessor on
+ * older WebViews, so capture works on every browser that has getUserMedia.
  */
-export async function openMic(onFrame: (frame: Float32Array) => void): Promise<MicHandle> {
+export async function openMic(onFrame: (frame: Float32Array) => void, opts: MicOptions = {}): Promise<MicHandle> {
   if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
     throw new MicError("getUserMedia is not available", "unsupported");
   }
 
+  const processing = opts.processing ?? false;
   let stream: MediaStream;
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       audio: {
         channelCount: 1,
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
+        echoCancellation: processing,
+        noiseSuppression: processing,
+        autoGainControl: processing,
       },
     });
   } catch (err) {
     const name = (err as DOMException)?.name;
     if (name === "NotAllowedError" || name === "SecurityError") {
       throw new MicError("Microphone permission denied", "denied");
+    }
+    if (name === "NotFoundError" || name === "OverconstrainedError") {
+      throw new MicError("No microphone found", "unsupported");
     }
     throw new MicError(String(err), "failed");
   }
@@ -120,42 +133,68 @@ export async function openMic(onFrame: (frame: Float32Array) => void): Promise<M
   } catch {
     ctx = new Ctx();
   }
-  if (ctx.state === "suspended") await ctx.resume();
-
-  try {
-    await ctx.audioWorklet.addModule("/pcm-worklet.js");
-  } catch (err) {
-    stream.getTracks().forEach((t) => t.stop());
-    await ctx.close();
-    throw new MicError(`AudioWorklet failed: ${String(err)}`, "unsupported");
-  }
-
-  const source = ctx.createMediaStreamSource(stream);
-  const node = new AudioWorkletNode(ctx, "pcm-worklet", {
-    numberOfInputs: 1,
-    numberOfOutputs: 0,
-    processorOptions: { chunkSize: 2048 },
-  });
+  if (ctx.state === "suspended") await ctx.resume().catch(() => undefined);
 
   let peak = 0;
-  node.port.onmessage = (event: MessageEvent<Float32Array>) => {
-    let frame = event.data;
-    if (ctx.sampleRate !== TARGET_RATE) frame = resampleLinear(frame, ctx.sampleRate, TARGET_RATE);
+  const deliver = (raw: Float32Array) => {
+    const frame = ctx.sampleRate !== TARGET_RATE ? resampleLinear(raw, ctx.sampleRate, TARGET_RATE) : raw;
     let p = 0;
-    for (let i = 0; i < frame.length; i++) p = Math.max(p, Math.abs(frame[i]));
+    for (let i = 0; i < frame.length; i++) {
+      const a = Math.abs(frame[i]);
+      if (a > p) p = a;
+    }
     peak = p;
     onFrame(frame);
   };
-  source.connect(node);
+
+  const source = ctx.createMediaStreamSource(stream);
+  let teardown: () => void;
+
+  let worklet: AudioWorkletNode | null = null;
+  try {
+    if (!ctx.audioWorklet) throw new Error("no worklet");
+    await ctx.audioWorklet.addModule("/pcm-worklet.js");
+    worklet = new AudioWorkletNode(ctx, "pcm-worklet", {
+      numberOfInputs: 1,
+      numberOfOutputs: 0,
+      processorOptions: { chunkSize: 2048 },
+    });
+  } catch {
+    worklet = null;
+  }
+
+  if (worklet) {
+    const node = worklet;
+    node.port.onmessage = (event: MessageEvent<Float32Array>) => deliver(event.data);
+    source.connect(node);
+    teardown = () => {
+      node.port.onmessage = null;
+      source.disconnect();
+      node.disconnect();
+    };
+  } else {
+    // Deprecated but universal. Routed through a muted gain so nothing is played back.
+    const node = ctx.createScriptProcessor(2048, 1, 1);
+    const mute = ctx.createGain();
+    mute.gain.value = 0;
+    node.onaudioprocess = (event) => deliver(new Float32Array(event.inputBuffer.getChannelData(0)));
+    source.connect(node);
+    node.connect(mute);
+    mute.connect(ctx.destination);
+    teardown = () => {
+      node.onaudioprocess = null;
+      source.disconnect();
+      node.disconnect();
+      mute.disconnect();
+    };
+  }
 
   return {
     rate: TARGET_RATE,
     level: () => peak,
     async stop() {
       try {
-        node.port.onmessage = null;
-        source.disconnect();
-        node.disconnect();
+        teardown();
       } catch {
         /* already torn down */
       }

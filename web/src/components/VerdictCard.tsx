@@ -3,44 +3,53 @@
 import { useState } from "react";
 
 import { useI18n } from "@/lib/i18n";
-import type { Colour, PhraseHit, VerifyResult, Verdict } from "@/lib/types";
 import { isTrusted, trust } from "@/lib/trusted";
+import type { Colour, PhraseHit, VerifyResult, Verdict } from "@/lib/types";
 
+import { RiskMeter } from "./Feedback";
 import { CheckIcon, ClockIcon, CrossIcon, QuestionIcon, ShieldIcon, WarningIcon } from "./Icons";
 
-const TONE: Record<Colour, { card: string; head: string; chip: string }> = {
+export const TONE: Record<Colour, { card: string; head: string; chip: string; badge: string; bar: string }> = {
   green: {
-    card: "border-verdict-green dark:border-emerald-500/50 bg-verdict-greenbg dark:bg-emerald-950/40 text-ink dark:text-slate-100",
+    card: "border-verdict-green/25 bg-verdict-greenbg dark:border-emerald-500/30 dark:bg-emerald-500/10",
     head: "text-verdict-green dark:text-emerald-400",
-    chip: "bg-verdict-green dark:bg-emerald-600 text-white",
+    chip: "bg-verdict-green text-white dark:bg-emerald-600",
+    badge: "bg-verdict-green text-white dark:bg-emerald-500",
+    bar: "bg-verdict-green dark:bg-emerald-400",
   },
   red: {
-    card: "border-verdict-red dark:border-rose-500/50 bg-verdict-redbg dark:bg-rose-950/40 text-ink dark:text-slate-100",
+    card: "border-verdict-red/25 bg-verdict-redbg dark:border-rose-500/30 dark:bg-rose-500/10",
     head: "text-verdict-red dark:text-rose-400",
-    chip: "bg-verdict-red dark:bg-rose-600 text-white",
+    chip: "bg-verdict-red text-white dark:bg-rose-600",
+    badge: "bg-verdict-red text-white dark:bg-rose-500",
+    bar: "bg-verdict-red dark:bg-rose-400",
   },
   orange: {
-    card: "border-verdict-orange dark:border-amber-500/50 bg-verdict-orangebg dark:bg-amber-950/40 text-ink dark:text-slate-100",
+    card: "border-amber-500/30 bg-verdict-orangebg dark:border-amber-500/30 dark:bg-amber-500/10",
     head: "text-verdict-orange dark:text-amber-400",
-    chip: "bg-verdict-orange dark:bg-amber-600 text-white",
+    chip: "bg-verdict-orange text-white dark:bg-amber-600",
+    badge: "bg-amber-500 text-white",
+    bar: "bg-amber-500",
   },
   grey: {
-    card: "border-verdict-grey/40 dark:border-slate-700 bg-verdict-greybg dark:bg-slate-900/60 text-ink dark:text-slate-100",
-    head: "text-verdict-grey dark:text-slate-300",
-    chip: "bg-verdict-grey dark:bg-slate-700 text-white",
+    card: "border-ink/10 bg-verdict-greybg dark:border-white/10 dark:bg-white/[0.06]",
+    head: "text-verdict-grey dark:text-slate-200",
+    chip: "bg-verdict-grey text-white dark:bg-slate-600",
+    badge: "bg-verdict-grey text-white dark:bg-slate-600",
+    bar: "bg-slate-400 dark:bg-slate-400",
   },
 };
 
 function VerdictIcon({ verdict, colour }: { verdict: Verdict; colour: Colour }) {
   const cls = "h-8 w-8";
-  if (verdict === "VERIFIED") return <CheckIcon className={cls} />;
-  if (verdict === "TAMPERED") return <CrossIcon className={cls} />;
+  if (verdict === "VERIFIED") return <CheckIcon className={cls} strokeWidth={3} />;
+  if (verdict === "TAMPERED") return <CrossIcon className={cls} strokeWidth={3} />;
   if (verdict === "REPLAYED" || verdict === "EXPIRED") return <ClockIcon className={cls} />;
   return colour === "red" ? <WarningIcon className={cls} /> : <QuestionIcon className={cls} />;
 }
 
 function formatTime(epochSeconds: number | null, lang: string): string {
-  if (!epochSeconds) return "";
+  if (!epochSeconds) return "—";
   return new Date(epochSeconds * 1000).toLocaleString(lang === "ms" ? "ms-MY" : "en-MY", {
     day: "numeric",
     month: "short",
@@ -49,26 +58,33 @@ function formatTime(epochSeconds: number | null, lang: string): string {
   });
 }
 
+const GROUP_TONE: Record<PhraseHit["group"], string> = {
+  money: "bg-verdict-red/10 text-verdict-red dark:bg-rose-500/15 dark:text-rose-300",
+  urgency: "bg-amber-500/15 text-verdict-orange dark:bg-amber-500/15 dark:text-amber-300",
+  secrecy: "bg-purple-500/10 text-purple-800 dark:bg-purple-500/15 dark:text-purple-300",
+  authority: "bg-blue-500/10 text-blue-900 dark:bg-blue-500/15 dark:text-blue-300",
+};
+
+const MARK_TONE: Record<PhraseHit["group"], string> = {
+  money: "bg-verdict-red/15 text-verdict-red dark:bg-rose-500/25 dark:text-rose-200",
+  urgency: "bg-amber-400/30 text-verdict-orange dark:bg-amber-500/25 dark:text-amber-200",
+  secrecy: "bg-purple-500/15 text-purple-900 dark:bg-purple-500/25 dark:text-purple-200",
+  authority: "bg-blue-500/15 text-blue-900 dark:bg-blue-500/25 dark:text-blue-200",
+};
+
 /** Phrase hits as coloured chips, grouped by the four scam categories. */
-export function PhraseChips({ phrases }: { phrases: PhraseHit[] }) {
+export function PhraseChips({ phrases }: { phrases: Pick<PhraseHit, "phrase" | "group">[] }) {
   const { tKey } = useI18n();
   if (phrases.length === 0) return null;
 
-  const seen = new Map<string, PhraseHit>();
+  const seen = new Map<string, Pick<PhraseHit, "phrase" | "group">>();
   for (const hit of phrases) if (!seen.has(hit.phrase)) seen.set(hit.phrase, hit);
-
-  const tone: Record<PhraseHit["group"], string> = {
-    money: "bg-verdict-red/10 text-verdict-red dark:bg-rose-950/50 dark:text-rose-300",
-    urgency: "bg-verdict-orange/10 text-verdict-orange dark:bg-amber-950/50 dark:text-amber-300",
-    secrecy: "bg-purple-100 text-purple-800 dark:bg-purple-950/50 dark:text-purple-300",
-    authority: "bg-blue-100 text-blue-900 dark:bg-blue-950/50 dark:text-blue-300",
-  };
 
   return (
     <ul className="flex flex-wrap gap-2">
       {[...seen.values()].map((hit) => (
-        <li key={hit.phrase} className={`chip ${tone[hit.group]}`}>
-          <span className="font-bold">{hit.phrase}</span>
+        <li key={hit.phrase} className={`chip ${GROUP_TONE[hit.group]}`}>
+          <span className="font-extrabold">{hit.phrase}</span>
           <span className="opacity-70">· {tKey("group", hit.group)}</span>
         </li>
       ))}
@@ -76,18 +92,18 @@ export function PhraseChips({ phrases }: { phrases: PhraseHit[] }) {
   );
 }
 
-/** Transcript with every flagged phrase marked inline. */
-export function TranscriptView({ text, phrases }: { text: string; phrases: PhraseHit[] }) {
-  if (!text) return null;
+/** Transcript with every flagged phrase marked inline, coloured by category. */
+export function TranscriptView({ text, phrases, tail }: { text: string; phrases: PhraseHit[]; tail?: string }) {
+  if (!text && !tail) return null;
   const sorted = [...phrases].sort((a, b) => a.start - b.start);
   const parts: React.ReactNode[] = [];
   let at = 0;
 
   for (const [i, hit] of sorted.entries()) {
-    if (hit.start < at) continue;
+    if (hit.start < at || hit.end > text.length) continue;
     if (hit.start > at) parts.push(<span key={`plain-${i}`}>{text.slice(at, hit.start)}</span>);
     parts.push(
-      <mark key={`hit-${i}`} className="rounded bg-yellow-200 dark:bg-yellow-500/30 px-0.5 font-semibold text-ink dark:text-yellow-200">
+      <mark key={`hit-${i}`} className={`rounded-md px-1 py-0.5 font-bold ${MARK_TONE[hit.group]}`}>
         {text.slice(hit.start, hit.end)}
       </mark>,
     );
@@ -95,32 +111,39 @@ export function TranscriptView({ text, phrases }: { text: string; phrases: Phras
   }
   parts.push(<span key="tail">{text.slice(at)}</span>);
 
-  return <p className="text-base leading-relaxed text-ink/85 dark:text-slate-200">{parts}</p>;
+  return (
+    <p className="text-base leading-relaxed text-ink/85 dark:text-slate-200">
+      {parts}
+      {tail && <span className="text-ink/40 dark:text-slate-500"> {tail}</span>}
+    </p>
+  );
 }
 
-/** Which 2 s segments failed, as a strip - the TAMPERED evidence. */
-function SegmentStrip({ result }: { result: VerifyResult }) {
-  const { t } = useI18n();
-  const segments = result.provenance.segments;
-  if (segments.length === 0 || result.verdict === "UNVERIFIED") return null;
-  const failed = segments.filter((s) => !s.matched);
-  if (failed.length === 0) return null;
+/** The clip as bars. For signed clips, the 2 s segments that failed are red. */
+function Waveform({ result }: { result: VerifyResult }) {
+  const peaks = result.waveform;
+  if (!peaks || peaks.length === 0) return null;
+  const segments = result.verdict === "UNVERIFIED" ? [] : result.provenance.segments;
+  const tone = TONE[result.colour];
 
   return (
-    <div className="space-y-2">
-      <p className="text-sm font-bold uppercase tracking-wide text-ink/55">{t("segmentsLabel")}</p>
-      <div className="flex gap-1 max-w-full overflow-x-auto py-1" role="img" aria-label={`${failed.length}/${segments.length}`}>
-        {segments.map((s) => (
+    <div className="flex h-14 items-center gap-[2px]" role="img" aria-hidden>
+      {peaks.map((p, i) => {
+        let failed = false;
+        if (segments.length > 0) {
+          const seg = segments[Math.min(segments.length - 1, Math.floor((i / peaks.length) * segments.length))];
+          failed = !seg.matched;
+        }
+        return (
           <span
-            key={s.seq_no}
-            title={`${s.seq_no * 2}-${s.seq_no * 2 + 2}s`}
-            className={`h-8 flex-1 min-w-[6px] rounded ${s.matched ? "bg-verdict-green/35" : "bg-verdict-red"}`}
+            key={i}
+            className={`min-w-[2px] flex-1 rounded-full ${
+              failed ? "bg-verdict-red dark:bg-rose-400" : segments.length > 0 && result.verdict === "TAMPERED" ? "bg-ink/20 dark:bg-white/25" : `${tone.bar} opacity-70`
+            }`}
+            style={{ height: `${Math.max(8, p * 100)}%` }}
           />
-        ))}
-      </div>
-      <p className="text-sm text-ink/65">
-        {failed.map((s) => `${s.seq_no * 2}–${s.seq_no * 2 + 2}s`).join(", ")}
-      </p>
+        );
+      })}
     </div>
   );
 }
@@ -129,80 +152,106 @@ function SegmentStrip({ result }: { result: VerifyResult }) {
 export function EngineNote({ engine, calibrated }: { engine: string; calibrated: boolean }) {
   const { t } = useI18n();
   return (
-    <p className="text-xs leading-snug text-ink/50">
+    <p>
       {t("engineLabel")}: {engine}
       {!calibrated && <> · {t("screeningOnly")}</>}
     </p>
   );
 }
 
+function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 py-2.5">
+      <dt className="shrink-0 text-sm text-ink/55 dark:text-slate-400">{label}</dt>
+      <dd className="min-w-0 break-words text-right text-sm font-bold">{children}</dd>
+    </div>
+  );
+}
+
 export function VerdictCard({ result, onReport }: { result: VerifyResult; onReport?: () => void }) {
   const { t, tKey, lang } = useI18n();
   const tone = TONE[result.colour];
-  const sender = result.provenance.sender_name;
+  const prov = result.provenance;
+  const sender = prov.sender_name;
+  const signed = result.verdict !== "UNVERIFIED";
   const [trusted, setTrusted] = useState(() => isTrusted(sender));
 
+  const segments = prov.segments;
+  const failed = segments.filter((s) => !s.matched);
+  const risk = result.risk;
+  const phraseLevel = !risk ? "low" : risk.phrase_score >= 0.45 ? "high" : risk.phrase_score > 0 ? "medium" : "low";
+
   return (
-    <div className="space-y-4 animate-rise">
-      <section className={`card ${tone.card}`} aria-live="polite">
-        <div className={`flex items-center gap-3 ${tone.head}`}>
-          <VerdictIcon verdict={result.verdict} colour={result.colour} />
-          <span className="text-2xl font-extrabold tracking-tight">
-            {t(`verdict_${result.verdict}` as "verdict_VERIFIED")}
+    <div className="space-y-3.5">
+      {/* 1. The verdict: colour + icon + word, never colour alone */}
+      <section className={`card animate-rise ${tone.card}`} aria-live="polite">
+        {result.simulated && (
+          <p className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-ink/80 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white dark:bg-white/20">
+            {t("sampleBadge")}
+          </p>
+        )}
+        <div className="flex items-center gap-3.5">
+          <span className={`flex h-14 w-14 shrink-0 animate-pop items-center justify-center rounded-2xl ${tone.badge}`}>
+            <VerdictIcon verdict={result.verdict} colour={result.colour} />
           </span>
+          <div className="min-w-0">
+            <p className={`text-2xl font-extrabold leading-tight tracking-tight ${tone.head}`}>
+              {t(`verdict_${result.verdict}` as "verdict_VERIFIED")}
+            </p>
+            {risk && <p className={`text-sm font-bold ${tone.head}`}>{t(`level_${risk.level}` as "level_low")}</p>}
+            {signed && sender && (
+              <p className="truncate text-sm font-semibold text-ink/70 dark:text-slate-300">
+                {t("senderLabel")} <strong className="text-ink dark:text-white">{sender}</strong>
+              </p>
+            )}
+          </div>
         </div>
 
-        <p className="mt-3 text-lg font-semibold leading-snug">
-          {tKey("head", result.headline_key)}
-        </p>
-
-        {result.verdict === "VERIFIED" && sender && (
-          <p className="mt-3 text-base">
-            {t("senderLabel")} <strong>{sender}</strong> {t("recordedAt")}{" "}
-            <strong>{formatTime(result.provenance.recorded_at, lang)}</strong>
-          </p>
+        <p className="mt-3.5 text-lg font-bold leading-snug">{tKey("head", result.headline_key)}</p>
+        {risk && risk.reason !== "low_risk_not_verified" && (
+          <p className="mt-1 text-base text-ink/75 dark:text-slate-300">{tKey("risk", risk.reason)}</p>
         )}
 
-        {result.provenance.context && (
-          <p className="mt-2 text-base text-ink/75">
-            {t("contextLabel")}: <em>“{result.provenance.context}”</em>
-          </p>
+        {result.waveform && (
+          <div className="mt-4">
+            <Waveform result={result} />
+            {result.verdict === "TAMPERED" && failed.length > 0 && segments.length > 0 && (
+              <p className="mt-1.5 text-sm font-semibold text-verdict-red dark:text-rose-400">
+                {t("segmentsLabel")}: {failed.map((s) => `${s.seq_no * 2}–${s.seq_no * 2 + 2}s`).join(", ")}
+              </p>
+            )}
+          </div>
         )}
-
-        {result.risk && (
-          <p className="mt-3 text-base">
-            <span className={`chip ${tone.chip}`}>{t(`level_${result.risk.level}` as "level_low")}</span>{" "}
-            <span className="align-middle">{tKey("risk", result.risk.reason)}</span>
-          </p>
-        )}
-
       </section>
 
-      {/* Next steps: the part that actually protects the user */}
-      <section className="card border-ink/15 dark:border-white/10 bg-white dark:bg-[#161c28]">
-        <ol className="space-y-3">
+      {/* 2. What to do next: the part that actually protects the user */}
+      <section className="panel animate-rise" style={{ animationDelay: "60ms" }}>
+        <p className="eyebrow">{t("nextSteps")}</p>
+        <ol className="mt-3 space-y-3">
           {result.step_keys.map((key, i) => (
             <li key={key} className="flex gap-3">
-              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft dark:bg-blue-950/60 text-sm font-bold text-brand-dark dark:text-blue-300">
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-extrabold text-brand-dark dark:bg-blue-500/15 dark:text-blue-300">
                 {i + 1}
               </span>
-              <span className="text-base leading-snug text-ink/90 dark:text-slate-200">{tKey("step", key)}</span>
+              <span className="text-base leading-snug">{tKey("step", key)}</span>
             </li>
           ))}
         </ol>
 
         {result.verdict === "VERIFIED" && sender && (
-          <div className="mt-4 border-t border-ink/10 dark:border-white/10 pt-4">
+          <div className="mt-4 border-t border-ink/[0.07] pt-4 dark:border-white/10">
             {trusted ? (
-              <p className="text-base font-semibold text-verdict-green dark:text-emerald-400">✓ {t("trustedSender")}</p>
+              <p className="flex items-center gap-2 text-base font-bold text-verdict-green dark:text-emerald-400">
+                <CheckIcon className="h-5 w-5" /> {t("trustedSender")}
+              </p>
             ) : (
               <>
-                <p className="mb-3 text-base text-ink/75 dark:text-slate-300">{t("newSender")}</p>
+                <p className="mb-3 text-sm text-ink/65 dark:text-slate-400">{t("newSender")}</p>
                 <button
                   type="button"
                   className="secondary-button"
                   onClick={() => {
-                    trust(sender, result.provenance.session_id);
+                    trust(sender, prov.session_id);
                     setTrusted(true);
                   }}
                 >
@@ -220,52 +269,102 @@ export function VerdictCard({ result, onReport }: { result: VerifyResult; onRepo
         )}
       </section>
 
-      <SegmentStrip result={result} />
-
-      {result.phrases && result.phrases.length > 0 && (
-        <section className="space-y-2">
-          <p className="text-sm font-bold uppercase tracking-wide text-ink/60 dark:text-slate-400">{t("liveFlagged")}</p>
-          <PhraseChips phrases={result.phrases} />
-        </section>
-      )}
-
-      {result.transcript && (
-        <section className="space-y-2">
-          <p className="text-sm font-bold uppercase tracking-wide text-ink/60 dark:text-slate-400">
-            {t("transcriptLabel")}
-          </p>
-          {result.transcript.text ? (
-            <TranscriptView text={result.transcript.text} phrases={result.phrases ?? []} />
-          ) : (
-            <p className="text-base text-ink/55 dark:text-slate-400">{t("noTranscript")}</p>
+      {/* 3a. Signed clip: the evidence */}
+      {signed && (
+        <section className="panel animate-rise" style={{ animationDelay: "120ms" }}>
+          <p className="eyebrow">{t("signatureEvidence")}</p>
+          <dl className="mt-1 divide-y divide-ink/[0.07] dark:divide-white/10">
+            <Fact label={t("factSender")}>{sender ?? "—"}</Fact>
+            <Fact label={t("factRecorded")}>{formatTime(prov.recorded_at, lang)}</Fact>
+            <Fact label={t("factValidUntil")}>{formatTime(prov.expires_at, lang)}</Fact>
+            {prov.context && <Fact label={t("contextLabel")}>“{prov.context}”</Fact>}
+            {segments.length > 0 && (
+              <Fact label={t("factSegments")}>
+                <span className={failed.length ? "text-verdict-red dark:text-rose-400" : "text-verdict-green dark:text-emerald-400"}>
+                  {segments.length - failed.length}/{segments.length} {t("factSegmentsOk")}
+                </span>
+              </Fact>
+            )}
+          </dl>
+          {prov.notes.length > 0 && (
+            <ul className="mt-2 space-y-1 text-sm text-ink/70 dark:text-slate-300">
+              {prov.notes.map((n) => (
+                <li key={n}>• {tKey("note", n)}</li>
+              ))}
+            </ul>
           )}
         </section>
       )}
 
-      <section className="space-y-2 border-t border-ink/10 dark:border-white/10 pt-4">
-        <div className="rounded-xl border border-ink/10 dark:border-white/10 bg-slate-100/70 dark:bg-slate-900/50 p-3 text-xs text-ink/75 dark:text-slate-300">
-          <p className="flex items-center gap-1.5 font-semibold text-ink dark:text-slate-200">
-            <ShieldIcon className="h-3.5 w-3.5 text-brand dark:text-blue-400 shrink-0" />
-            <span>{t("disclaimerTitle")}</span>
+      {/* 3b. Unsigned clip: the two independent warnings */}
+      {risk && (
+        <section className="panel animate-rise space-y-4" style={{ animationDelay: "120ms" }}>
+          <p className="eyebrow">{t("analysisTitle")}</p>
+          <RiskMeter
+            label={t("meterVoice")}
+            value={risk.ai_score}
+            level={risk.ai_level}
+            caption={
+              result.voice && !result.voice.enough_speech
+                ? t("voiceTooShort")
+                : result.source === "mic"
+                  ? t("voiceMicCaveat")
+                  : tKey("voiceCaption", risk.ai_level)
+            }
+          />
+          <RiskMeter
+            label={t("meterWords")}
+            value={risk.phrase_score}
+            level={phraseLevel}
+            caption={
+              result.transcript && !result.transcript.available
+                ? t("noTranscript")
+                : (result.phrases?.length ?? 0) === 0
+                  ? t("wordsNone")
+                  : undefined
+            }
+          />
+          {result.phrases && result.phrases.length > 0 && <PhraseChips phrases={result.phrases} />}
+          <p className="flex items-start gap-2 rounded-2xl bg-ink/[0.04] p-3 text-xs leading-snug text-ink/65 dark:bg-white/[0.05] dark:text-slate-400">
+            <ShieldIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand dark:text-blue-400" strokeWidth={2} />
+            <span>{t("noSignatureNote")}</span>
           </p>
-          <p className="mt-1 leading-relaxed text-ink/70 dark:text-slate-300">{t("disclaimerBody")}</p>
-        </div>
+        </section>
+      )}
 
-        <details className="cursor-pointer text-[11px] text-ink/45 dark:text-slate-400">
-          <summary className="font-semibold select-none hover:text-ink/75 dark:hover:text-slate-200">
-            {t("technicalDetails")} ({result.latency_ms} ms)
-          </summary>
-          <div className="mt-1 space-y-0.5 font-mono">
-            {result.detection && (
-              <EngineNote engine={result.detection.engine} calibrated={result.detection.calibrated} />
-            )}
-            <p>
-              {t("engineLabel")}: {result.provenance.watermark.engine} · {result.latency_ms} ms ·{" "}
-              {result.duration_s} s
-            </p>
+      {result.transcript?.text && (
+        <section className="panel animate-rise" style={{ animationDelay: "180ms" }}>
+          <p className="eyebrow">{t("transcriptLabel")}</p>
+          <div className="mt-2">
+            <TranscriptView text={result.transcript.text} phrases={result.phrases ?? []} />
           </div>
-        </details>
-      </section>
+        </section>
+      )}
+
+      <details className="px-1 text-xs text-ink/45 dark:text-slate-500">
+        <summary className="cursor-pointer select-none font-bold hover:text-ink/70 dark:hover:text-slate-300">
+          {t("technicalDetails")}
+        </summary>
+        <div className="mt-2 space-y-1 font-mono text-[11px] leading-relaxed">
+          <p>
+            {t("engineLabel")}: {prov.watermark.engine}
+          </p>
+          {result.detection && <EngineNote engine={result.detection.engine} calibrated={result.detection.calibrated} />}
+          {result.transcript && result.transcript.engine !== "none" && <p>ASR: {result.transcript.engine}</p>}
+          <p>
+            {result.duration_s}s · {result.latency_ms} ms{prov.session_id ? ` · ${prov.session_id}` : ""}
+          </p>
+          {result.detection?.features && Object.keys(result.detection.features).length > 0 && (
+            <p className="break-words">
+              {["depth_db", "deep_silence_frac", "silence_frac", "snr_db", "f0_jitter"]
+                .filter((k) => k in (result.detection?.features ?? {}))
+                .map((k) => `${k}=${result.detection?.features[k]}`)
+                .join(" · ")}
+            </p>
+          )}
+          <p className="font-sans text-xs">{t("disclaimerBody")}</p>
+        </div>
+      </details>
     </div>
   );
 }

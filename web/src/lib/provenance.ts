@@ -17,7 +17,8 @@
  */
 import * as ed from "@noble/ed25519";
 
-import { encodeWav, resampleLinear, TARGET_RATE } from "./audio";
+import { encodeWav } from "./audio";
+import { decodeAudio, DecodeError } from "./decode";
 import { fromHex, signingPayload, toHex, type Identity } from "./device-key";
 import type { SegmentResult, VerifyResult } from "./types";
 
@@ -147,24 +148,24 @@ async function rootOf(segs: string[]): Promise<string> {
   return toHex(await sha256(joined));
 }
 
-/** Any audio the browser can play -> 16 kHz mono 16-bit WAV (PCM WAV passes through untouched). */
+/**
+ * Any audio the device can decode -> 16-bit PCM WAV. A 16-bit PCM WAV passes
+ * through untouched; everything else (opus, m4a, mp3, flac, video audio...)
+ * is decoded and re-encoded as 16 kHz mono.
+ */
 export async function toPcmWav(audio: Blob): Promise<ParsedWav> {
   const bytes = new Uint8Array(await audio.arrayBuffer());
   const parsed = parseWav(bytes);
-  if (parsed && parsed.bitsPerSample === 16 && parsed.data.length > 0) return parsed;
+  if (parsed && parsed.bitsPerSample === 16 && parsed.data.length > 0 && isPcm(parsed)) return parsed;
 
-  const Ctx =
-    window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  const ctx = new Ctx();
-  try {
-    const decoded = await ctx.decodeAudioData(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer);
-    const mono = resampleLinear(decoded.getChannelData(0), decoded.sampleRate, TARGET_RATE);
-    const wav = parseWav(new Uint8Array(await encodeWav(mono, TARGET_RATE).arrayBuffer()));
-    if (!wav) throw new Error("WAV encode failed");
-    return wav;
-  } finally {
-    void ctx.close().catch(() => undefined);
-  }
+  const decoded = await decodeAudio(audio);
+  const wav = parseWav(new Uint8Array(await encodeWav(decoded.samples, decoded.rate).arrayBuffer()));
+  if (!wav) throw new DecodeError("unsupported");
+  return wav;
+}
+
+function isPcm(wav: ParsedWav): boolean {
+  return new DataView(wav.fmt.buffer, wav.fmt.byteOffset, wav.fmt.byteLength).getUint16(0, true) === 1;
 }
 
 function randomHex(n: number): string {
@@ -178,6 +179,9 @@ export interface SignedClip {
   sessionId: string;
   durationS: number;
   segments: number;
+  signatureHex: string;
+  fingerprintRoot: string;
+  expiresAt: number;
 }
 
 /** Signs the audio on this device and returns a WAV that carries its own proof. */
@@ -187,7 +191,7 @@ export async function signOnDevice(
   opts: { sender: string; context: string; expirySeconds: number },
 ): Promise<SignedClip> {
   const wav = await toPcmWav(audio);
-  if (wav.data.length === 0) throw new Error("Rakaman kosong / empty recording");
+  if (wav.data.length === 0) throw new DecodeError("empty");
   const segs = await segmentHashes(wav, SEGMENT_SECONDS);
   const root = await rootOf(segs);
   const now = Math.floor(Date.now() / 1000);
@@ -212,6 +216,9 @@ export async function signOnDevice(
     sessionId: meta.sid,
     durationS: Math.round((wav.data.length / blockAlign / wav.sampleRate) * 10) / 10,
     segments: segs.length,
+    signatureHex: meta.sig,
+    fingerprintRoot: root,
+    expiresAt: meta.exp,
   };
 }
 

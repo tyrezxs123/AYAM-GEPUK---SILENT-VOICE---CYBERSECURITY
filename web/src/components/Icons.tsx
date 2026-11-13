@@ -140,3 +140,98 @@ export const ServerIcon = (p: IconProps) => (
   </svg>
 );
 
+
+export const HomeIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M3 10.5 12 3l9 7.5" />
+    <path d="M5 9.5V20h5v-6h4v6h5V9.5" />
+  </svg>
+);
+
+export const GearIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.8 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.8 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+  </svg>
+);
+
+export const ChevronRightIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="m9 6 6 6-6 6" />
+  </svg>
+);
+
+export const UploadIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M12 16V4" />
+    <path d="m7 9 5-5 5 5" />
+    <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+  </svg>
+);
+
+export const KeyIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <circle cx="8" cy="15" r="4" />
+    <path d="m11 12 9-9" />
+    <path d="m16 7 3 3" />
+  </svg>
+);
+
+export const TrashIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 7h16" />
+    <path d="M9 7V4h6v3" />
+    <path d="M6 7l1 13h10l1-13" />
+  </svg>
+);
+
+export const BotIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="4" y="8" width="16" height="11" rx="3" />
+    <path d="M12 8V4" />
+    <circle cx="12" cy="3.5" r="0.8" />
+    <path d="M9 13v1.5M15 13v1.5" />
+  </svg>
+);
+
+export const ChatIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 5h16v11H9l-5 4V5Z" />
+    <path d="M8 9h8M8 12h5" />
+  </svg>
+);
+
+export const ScissorsIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <circle cx="6" cy="6" r="2.5" />
+    <circle cx="6" cy="18" r="2.5" />
+    <path d="M8 8l12 10M8 16 20 6" />
+  </svg>
+);
+
+export const ShieldCheckIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M12 3 4.5 6v5.5c0 4.6 3.1 8.2 7.5 9.5 4.4-1.3 7.5-4.9 7.5-9.5V6L12 3Z" />
+    <path d="m8.8 12 2.3 2.3 4.2-4.6" />
+  </svg>
+);
+
+/** The app mark: a shield carrying a voice waveform. */
+export const LogoMark = ({ className = "h-9 w-9" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 40 40" aria-hidden>
+    <defs>
+      <linearGradient id="sv-logo" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stopColor="#5b86ff" />
+        <stop offset="1" stopColor="#1b4ddb" />
+      </linearGradient>
+    </defs>
+    <path d="M20 3 6 8.5v10.2C6 27.4 11.800 33.900 20 37c8.200-3.100 14-9.600 14-18.300V8.500L20 3Z" fill="url(#sv-logo)" />
+    <g stroke="#fff" strokeWidth="2.4" strokeLinecap="round">
+      <path d="M12.500 17.500v5" />
+      <path d="M16.250 14v12" />
+      <path d="M20 11v18" />
+      <path d="M23.750 15v10" />
+      <path d="M27.500 18v4" />
+    </g>
+  </svg>
+);

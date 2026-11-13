@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 import { ServiceWorker } from "@/components/ServiceWorker";
 
+import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1b4ddb",
+  themeColor: "#f3f5fa",
   width: "device-width",
   initialScale: 1,
   // The verdict must stay readable, so zooming stays available.
@@ -51,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="bg-slate-50 text-ink dark:bg-[#0c1017] dark:text-slate-100 transition-colors duration-200">
+      <body>
         <ThemeProvider>
           <I18nProvider>
             {children}
