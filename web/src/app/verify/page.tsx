@@ -9,7 +9,7 @@ import { ReportSheet, ServerSettingsSheet } from "@/components/Sheets";
 import { VerdictCard } from "@/components/VerdictCard";
 import { verifyAudio } from "@/lib/api";
 import { startRecording, type Recording } from "@/lib/audio";
-import { evaluateOfflineScan } from "@/lib/client-scanner";
+import { verifyAudioClientSide } from "@/lib/client-scanner";
 import { useI18n } from "@/lib/i18n";
 import { speechSupported, startSpeech, type SpeechSession } from "@/lib/speech";
 import type { VerifyResult } from "@/lib/types";
@@ -67,25 +67,20 @@ export default function VerifyPage() {
       setResult(out);
       setPhase("done");
       if (out.colour === "red" && "vibrate" in navigator) navigator.vibrate?.([120, 60, 120]);
-    } catch (err) {
-      // If server is unreachable/offline, but the browser captured speech transcript,
-      // run client-side linguistic screening so the user NEVER hangs on "Memeriksa perkataan"
-      if (text.length > 0) {
-        try {
-          const offlineOut = evaluateOfflineScan(text, seconds);
-          setResult(offlineOut);
-          setPhase("done");
-          if (offlineOut.colour === "red" && "vibrate" in navigator) {
-            navigator.vibrate?.([120, 60, 120]);
-          }
-          return;
-        } catch {
-          /* continue to error display */
+    } catch {
+      // If server is unreachable/offline, or returns 404 (e.g. static hosting on Netlify),
+      // run client-side audio decoding and screening so verification ALWAYS succeeds!
+      try {
+        const clientOut = await verifyAudioClientSide(blob, text, filename);
+        setResult(clientOut);
+        setPhase("done");
+        if (clientOut.colour === "red" && "vibrate" in navigator) {
+          navigator.vibrate?.([120, 60, 120]);
         }
+      } catch (clientErr) {
+        setError(clientErr instanceof Error ? clientErr.message : String(clientErr));
+        setPhase("error");
       }
-
-      setError(err instanceof Error ? err.message : String(err));
-      setPhase("error");
     }
   }
 

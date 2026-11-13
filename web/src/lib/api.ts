@@ -123,6 +123,9 @@ async function readError(res: Response): Promise<never> {
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
   const base = apiBase();
+  if (!base) {
+    throw new ApiError("Tiada pelayan backend ditetapkan. Sila tetapkan URL pelayan di Tetapan.", 404);
+  }
   const res = await fetchWithTimeout(`${base}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -143,12 +146,16 @@ export async function verifyAudio(
   file: Blob,
   opts: { filename?: string; transcript?: string; source?: "file" | "live" } = {},
 ): Promise<VerifyResult> {
+  const base = apiBase();
+  if (!base) {
+    throw new ApiError("Tiada pelayan backend ditetapkan pada domain ini.", 404);
+  }
+
   const form = new FormData();
   form.append("audio", file, opts.filename ?? "audio.wav");
   form.append("source", opts.source ?? "file");
   if (opts.transcript) form.append("transcript", opts.transcript);
 
-  const base = apiBase();
   const res = await fetchWithTimeout(`${base}/verify`, { method: "POST", body: form }, 15000);
   if (!res.ok) await readError(res);
   return res.json() as Promise<VerifyResult>;
@@ -176,9 +183,12 @@ export function createSession(body: {
 }
 
 export async function prepareSession(sessionId: string, audio: Blob): Promise<PrepareOut> {
+  const base = apiBase();
+  if (!base) {
+    throw new ApiError("Tiada pelayan backend ditetapkan. Sila tetapkan URL pelayan di Tetapan.", 404);
+  }
   const form = new FormData();
   form.append("audio", audio, "clip.wav");
-  const base = apiBase();
   const res = await fetchWithTimeout(`${base}/sessions/${sessionId}/prepare`, { method: "POST", body: form }, 15000);
   if (!res.ok) await readError(res);
   return res.json() as Promise<PrepareOut>;
@@ -186,9 +196,12 @@ export async function prepareSession(sessionId: string, audio: Blob): Promise<Pr
 
 /** Returns the signed WAV. The server deletes its copy of the audio right after. */
 export async function signSession(sessionId: string, signatureHex: string): Promise<Blob> {
+  const base = apiBase();
+  if (!base) {
+    throw new ApiError("Tiada pelayan backend ditetapkan. Sila tetapkan URL pelayan di Tetapan.", 404);
+  }
   const form = new FormData();
   form.append("signature", signatureHex);
-  const base = apiBase();
   const res = await fetchWithTimeout(`${base}/sessions/${sessionId}/sign`, { method: "POST", body: form }, 15000);
   if (!res.ok) await readError(res);
   return res.blob();
