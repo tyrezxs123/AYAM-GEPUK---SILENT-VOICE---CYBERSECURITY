@@ -101,7 +101,7 @@ function call(
 const CACHED_KEY = "silentvoice.asr.cached";
 
 /** True once this model has been downloaded on this device (loads after that come from cache). */
-function modelCached(): boolean {
+export function modelCached(): boolean {
   try {
     return window.localStorage.getItem(CACHED_KEY) === asrModel();
   } catch {

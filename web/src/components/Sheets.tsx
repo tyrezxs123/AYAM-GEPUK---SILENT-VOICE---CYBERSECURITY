@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { explicitApiBase, health, reportNumber, setSavedApiBase } from "@/lib/api";
-import { asrModel, asrSupported, warmUpAsr } from "@/lib/asr";
+import { asrModel, asrSupported, modelCached, warmUpAsr } from "@/lib/asr";
 import { clearHistory, listHistory } from "@/lib/history";
 import { useI18n } from "@/lib/i18n";
 import { listTrusted, untrust, type TrustedSender } from "@/lib/trusted";
@@ -146,6 +146,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
     setTrusted(listTrusted());
     setHistoryCount(listHistory().length);
     setUrl(explicitApiBase() ?? "");
+    if (modelCached()) setModel({ state: "ready", pct: 1 });
   }, []);
 
   async function loadModel() {
