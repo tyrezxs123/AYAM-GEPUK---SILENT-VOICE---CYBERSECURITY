@@ -98,10 +98,32 @@ function call(
   });
 }
 
+const CACHED_KEY = "silentvoice.asr.cached";
+
+/** True once this model has been downloaded on this device (loads after that come from cache). */
+function modelCached(): boolean {
+  try {
+    return window.localStorage.getItem(CACHED_KEY) === asrModel();
+  } catch {
+    return false;
+  }
+}
+
+function markCached(): void {
+  try {
+    window.localStorage.setItem(CACHED_KEY, asrModel());
+  } catch {
+    /* private mode */
+  }
+}
+
 /** Starts downloading the model in the background so the first check is fast. */
 export function warmUpAsr(onProgress?: (p: AsrProgress) => void): Promise<boolean> {
-  return call("load", {}, onProgress).then(
-    () => true,
+  return call("load", {}, modelCached() ? undefined : onProgress).then(
+    () => {
+      markCached();
+      return true;
+    },
     () => false,
   );
 }
@@ -127,7 +149,13 @@ export async function transcribe(
   if (samples.length < 8000) return "";
   try {
     // Copy: the caller may still need its buffer.
-    const text = await call("transcribe", { samples: samples.slice(), language: lang === "ms" ? "malay" : "english" }, onProgress);
+    // Loading a cached model still reports "progress"; only show it for a real download.
+    const text = await call(
+      "transcribe",
+      { samples: samples.slice(), language: lang === "ms" ? "malay" : "english" },
+      modelCached() ? undefined : onProgress,
+    );
+    markCached();
     return clean(text);
   } catch (err) {
     console.warn("On-device transcription unavailable:", err);
