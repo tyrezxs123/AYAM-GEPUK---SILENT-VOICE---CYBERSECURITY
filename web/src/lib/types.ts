@@ -15,6 +15,8 @@ export interface Provenance {
   expires_at: number | null;
   context: string | null;
   session_id: string | null;
+  /** Hex Ed25519 public key that signed the clip (on-device signatures). */
+  signer_key?: string | null;
   notes: string[];
   segments: SegmentResult[];
   watermark: { confidence: number; engine: string };

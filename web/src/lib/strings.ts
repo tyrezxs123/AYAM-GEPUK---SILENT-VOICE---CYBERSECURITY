@@ -305,6 +305,8 @@ const ms = {
   signFormats: "Menerima semua format audio. Fail bertandatangan disimpan sebagai WAV.",
   signingHint: "Mengira cap audio dan menandatangan dengan kunci peranti.",
   verifyNow: "Semak sekarang",
+  impostorTitle: "Awas: peranti lain guna nama ini",
+  impostorBody: "Anda mempercayai “{name}” pada peranti lain. Rakaman ini ditandatangani oleh kunci yang berbeza — sesiapa boleh guna nama “{name}”. Jangan ikut arahannya; telefon semula nombor yang disimpan.",
 };
 
 const en: Record<keyof typeof ms, string> = {
@@ -590,6 +592,8 @@ const en: Record<keyof typeof ms, string> = {
   signFormats: "Accepts every audio format. The signed file is saved as WAV.",
   signingHint: "Fingerprinting the audio and signing with the device key.",
   verifyNow: "Check it now",
+  impostorTitle: "Warning: a different device is using this name",
+  impostorBody: "You trusted “{name}” on another device. This clip was signed by a different key — anyone can call themselves “{name}”. Do not act on it; call back on the saved number.",
 };
 
 export type StringKey = keyof typeof ms;

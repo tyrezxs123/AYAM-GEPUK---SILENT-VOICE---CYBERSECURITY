@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { useI18n } from "@/lib/i18n";
-import { isTrusted, trust } from "@/lib/trusted";
+import { trust, trustStatus } from "@/lib/trusted";
 import type { Colour, PhraseHit, VerifyResult, Verdict } from "@/lib/types";
 
 import { RiskMeter } from "./Feedback";
@@ -174,7 +174,8 @@ export function VerdictCard({ result, onReport }: { result: VerifyResult; onRepo
   const prov = result.provenance;
   const sender = prov.sender_name;
   const signed = result.verdict !== "UNVERIFIED";
-  const [trusted, setTrusted] = useState(() => isTrusted(sender));
+  const signerKey = prov.signer_key ?? null;
+  const [status, setStatus] = useState(() => trustStatus(sender, signerKey));
 
   const segments = prov.segments;
   const failed = segments.filter((s) => !s.matched);
@@ -228,7 +229,12 @@ export function VerdictCard({ result, onReport }: { result: VerifyResult; onRepo
       <section className="panel animate-rise" style={{ animationDelay: "60ms" }}>
         <p className="eyebrow">{t("nextSteps")}</p>
         <ol className="mt-3 space-y-3">
-          {result.step_keys.map((key, i) => (
+          {(status === "impostor"
+            ? ["do_not_act", "call_back_saved_number", "report_number"]
+            : status === "trusted"
+              ? result.step_keys.filter((k) => k !== "save_trusted_sender")
+              : result.step_keys
+          ).map((key, i) => (
             <li key={key} className="flex gap-3">
               <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-extrabold text-brand-dark dark:bg-blue-500/15 dark:text-blue-300">
                 {i + 1}
@@ -240,23 +246,32 @@ export function VerdictCard({ result, onReport }: { result: VerifyResult; onRepo
 
         {result.verdict === "VERIFIED" && sender && (
           <div className="mt-4 border-t border-ink/[0.07] pt-4 dark:border-white/10">
-            {trusted ? (
+            {status === "impostor" ? (
+              <div className="rounded-2xl border border-verdict-red/30 bg-verdict-redbg p-3.5 dark:border-rose-500/30 dark:bg-rose-500/10" role="alert">
+                <p className="flex items-center gap-2 text-base font-extrabold text-verdict-red dark:text-rose-400">
+                  <WarningIcon className="h-5 w-5 shrink-0" /> {t("impostorTitle")}
+                </p>
+                <p className="mt-1.5 text-sm leading-snug">{t("impostorBody").replace("{name}", sender)}</p>
+              </div>
+            ) : status === "trusted" ? (
               <p className="flex items-center gap-2 text-base font-bold text-verdict-green dark:text-emerald-400">
                 <CheckIcon className="h-5 w-5" /> {t("trustedSender")}
               </p>
             ) : (
               <>
                 <p className="mb-3 text-sm text-ink/65 dark:text-slate-400">{t("newSender")}</p>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => {
-                    trust(sender, prov.session_id);
-                    setTrusted(true);
-                  }}
-                >
-                  {t("saveTrusted")}
-                </button>
+                {signerKey && (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => {
+                      trust(sender, signerKey, prov.session_id);
+                      setStatus("trusted");
+                    }}
+                  >
+                    {t("saveTrusted")}
+                  </button>
+                )}
               </>
             )}
           </div>

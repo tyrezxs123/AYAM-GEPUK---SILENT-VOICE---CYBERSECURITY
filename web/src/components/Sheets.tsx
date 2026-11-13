@@ -177,7 +177,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         ) : (
           <ul className="mt-1 divide-y divide-ink/[0.07] dark:divide-white/10">
             {trusted.map((s) => (
-              <li key={s.name} className="flex items-center justify-between gap-3 py-2.5">
+              <li key={s.key} className="flex items-center justify-between gap-3 py-2.5">
                 <span className="flex min-w-0 items-center gap-2.5">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-verdict-greenbg text-sm font-extrabold text-verdict-green dark:bg-emerald-500/15 dark:text-emerald-400">
                     {s.name.slice(0, 1).toUpperCase()}
@@ -189,7 +189,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
                   className="icon-button text-verdict-red dark:text-rose-400"
                   aria-label={t("remove")}
                   onClick={() => {
-                    untrust(s.name);
+                    untrust(s.key);
                     setTrusted(listTrusted());
                   }}
                 >

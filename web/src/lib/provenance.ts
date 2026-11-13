@@ -304,6 +304,7 @@ export async function verifyOnDevice(audio: Blob): Promise<VerifyResult | null> 
       expires_at: meta.exp ?? null,
       context: meta.ctx || null,
       session_id: meta.sid ?? null,
+      signer_key: meta.pub ?? null,
       notes,
       segments,
       watermark: { confidence: tampered ? 1 - failed / Math.max(1, count) : 1, engine: PROVENANCE_ENGINE },

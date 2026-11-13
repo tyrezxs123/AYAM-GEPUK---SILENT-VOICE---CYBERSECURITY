@@ -1,27 +1,32 @@
 /**
  * Trusted senders, kept on the receiver's own phone.
  *
- * This is the MVP answer to the "scammer registers as Ayah" threat (PRD
- * Section 7): a signature proves the clip came unchanged from some registered
- * device, not that the name on it is the person you think. So the first time a
- * name appears we warn, and the receiver decides to trust that specific
- * device key - not the display name.
+ * A valid signature proves a clip came unchanged from the phone that signed it.
+ * It does not prove the display name is the person you think: anyone can sign
+ * with their own key and call themselves "Ayah". So trust is tied to the
+ * signing KEY, never the name. The same name arriving from a different key is
+ * flagged as a possible impersonation, even after "Ayah" has been trusted.
  */
-const KEY = "silentvoice.trusted";
+const KEY = "silentvoice.trusted.v2";
 
 export interface TrustedSender {
-  /** The session's signing identity: name plus the key that signed it. */
   name: string;
+  /** Hex Ed25519 public key that signed the clip the user chose to trust. */
+  key: string;
   sessionId: string;
   firstSeen: number;
 }
 
-type Store = Record<string, TrustedSender>;
+/** trusted: this exact key was trusted. impostor: the name is trusted, but under a different key. */
+export type TrustStatus = "trusted" | "impostor" | "new";
+
+type Store = Record<string, TrustedSender>; // keyed by public key
 
 function read(): Store {
   if (typeof window === "undefined") return {};
   try {
-    return JSON.parse(window.localStorage.getItem(KEY) ?? window.localStorage.getItem("suarasah.trusted") ?? "{}") as Store;
+    // Older name-keyed entries are deliberately not migrated: they carry no key.
+    return JSON.parse(window.localStorage.getItem(KEY) ?? "{}") as Store;
   } catch {
     return {};
   }
@@ -35,29 +40,25 @@ function write(store: Store): void {
   }
 }
 
-function idFor(name: string): string {
-  return name.trim().toLowerCase();
-}
+const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
-export function isTrusted(name: string | null | undefined): boolean {
-  if (!name) return false;
-  return idFor(name) in read();
-}
-
-export function trust(name: string, sessionId: string | null): void {
-  if (!name) return;
+export function trustStatus(name: string | null | undefined, key: string | null | undefined): TrustStatus {
+  if (!name || !key) return "new";
   const store = read();
-  store[idFor(name)] = {
-    name,
-    sessionId: sessionId ?? "",
-    firstSeen: store[idFor(name)]?.firstSeen ?? Date.now(),
-  };
+  if (store[key]) return "trusted";
+  return Object.values(store).some((s) => sameName(s.name, name)) ? "impostor" : "new";
+}
+
+export function trust(name: string, key: string, sessionId: string | null): void {
+  if (!name || !key) return;
+  const store = read();
+  store[key] = { name, key, sessionId: sessionId ?? "", firstSeen: store[key]?.firstSeen ?? Date.now() };
   write(store);
 }
 
-export function untrust(name: string): void {
+export function untrust(key: string): void {
   const store = read();
-  delete store[idFor(name)];
+  delete store[key];
   write(store);
 }
 
