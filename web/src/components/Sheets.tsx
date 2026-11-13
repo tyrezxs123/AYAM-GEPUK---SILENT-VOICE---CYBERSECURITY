@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { explicitApiBase, health, reportNumber, setSavedApiBase } from "@/lib/api";
 import { asrModel, asrSupported, warmUpAsr } from "@/lib/asr";
@@ -10,7 +11,12 @@ import { listTrusted, untrust, type TrustedSender } from "@/lib/trusted";
 
 import { CheckIcon, CrossIcon, TrashIcon } from "./Icons";
 
-/** Bottom sheet shell: thumb-reachable on a phone, dismissible by backdrop tap. */
+/**
+ * Bottom sheet shell: thumb-reachable on a phone, dismissible by backdrop tap.
+ * Rendered into <body> through a portal: an ancestor with backdrop-filter (the
+ * sticky header) would otherwise become the containing block for `fixed` and
+ * push the sheet off-screen.
+ */
 function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -23,7 +29,8 @@ function Sheet({ onClose, children }: { onClose: () => void; children: React.Rea
     };
   }, [onClose]);
 
-  return (
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true">
       <button type="button" aria-hidden tabIndex={-1} className="absolute inset-0 bg-black/55 backdrop-blur-[2px]" onClick={onClose} />
       <div
@@ -33,7 +40,8 @@ function Sheet({ onClose, children }: { onClose: () => void; children: React.Rea
         <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-ink/15 dark:bg-white/20" />
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
