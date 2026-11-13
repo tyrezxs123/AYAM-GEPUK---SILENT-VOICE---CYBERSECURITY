@@ -20,7 +20,11 @@ fi
 LAN=false
 HTTPS=false
 API_PORT=8000
-WEB_PORT=3000
+if lsof -nP -iTCP:3000 -sTCP:LISTEN >/dev/null 2>&1; then
+  WEB_PORT=3001
+else
+  WEB_PORT=3000
+fi
 
 for arg in "$@"; do
   case "$arg" in
@@ -99,7 +103,7 @@ echo "Web -> ${SCHEME}://${BIND}:${WEB_PORT}"
 echo
 
 ( cd "$root/api" && "$python_bin" -m uvicorn app.main:app --host "$BIND" --port "$API_PORT" --reload ${API_EXTRA_ARGS[@]+"${API_EXTRA_ARGS[@]}"} ) &
-( cd "$root/web" && npm run "$WEB_SCRIPT" ) &
+( cd "$root/web" && npm run "$WEB_SCRIPT" -- -p "$WEB_PORT" ) &
 
 if [ "$LAN" = true ]; then
   echo
