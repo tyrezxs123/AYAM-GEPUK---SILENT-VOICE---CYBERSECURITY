@@ -1,14 +1,14 @@
 {
-  "name": "SilentVoice - Voice Provenance",
+  "name": "SilentVoice - Voice Provenance & Deepfake Detection",
   "short_name": "SilentVoice",
-  "description": "Semak sama ada nota suara atau panggilan benar-benar datang daripada orang itu.",
+  "description": "Verify whether a voice note or phone call is authentic, a synthetic AI deepfake, or an impersonation scam.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#1b4ddb",
-  "lang": "ms-MY",
+  "lang": "en",
   "dir": "ltr",
   "categories": ["utilities", "security"],
   "icons": [
@@ -17,8 +17,8 @@
     { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Semak Audio", "url": "/verify" },
-    { "name": "Imbas Panggilan", "url": "/live" },
-    { "name": "Tandatangan Suara", "url": "/sign" }
+    { "name": "Verify Audio", "url": "/verify" },
+    { "name": "Live Scan", "url": "/live" },
+    { "name": "Sign Voice", "url": "/sign" }
   ]
 }

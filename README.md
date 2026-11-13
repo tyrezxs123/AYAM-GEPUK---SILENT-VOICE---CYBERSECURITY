@@ -1,8 +1,8 @@
 # 🛡️ SilentVoice
 
 <p align="center">
-  <strong>Jangan percaya suara. Sahkan asalnya.</strong><br>
-  <em>Don't trust the voice. Verify its origin.</em>
+  <strong>Don't trust the voice. Verify its origin.</strong><br>
+  <em>A mobile-first PWA for cryptographic voice provenance, on-device AI deepfake screening, and real-time scam call detection.</em>
 </p>
 
 <p align="center">
@@ -16,191 +16,192 @@
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License" />
 </p>
 
-A bilingual (Bahasa Melayu / English) mobile-first Progressive Web Application (PWA) that empowers everyday Malaysians to instantly determine whether a voice note or phone call is authentic, a synthetic AI deepfake, or an urgent impersonation scam — in seconds, with zero technical expertise required.
+SilentVoice is a mobile-first Progressive Web Application (PWA) with full offline capabilities, designed to protect everyday citizens from voice cloning scams, AI deepfakes, and urgent impersonation extortion. It enables anyone to instantly verify whether a voice note or incoming call is authentic, a synthetic AI generation, or a financial scam — in seconds, with zero technical expertise required.
 
 ---
 
-## 📸 Ciri-Ciri Utama & Paparan Skrin (Features & Screenshots)
+## 📸 Key Features & Screenshots
 
-### 1. 📊 Papan Pemuka & Sejarah Imbasan (Home Dashboard & Activity History)
-Papan pemuka utama menyediakan gambaran pantas metrik keselamatan, ringkasan aktiviti terdahulu, dan akses terus kepada semua alat perlindungan.
+### 1. 📊 Home Dashboard & Activity History
+The centralized dashboard delivers an immediate overview of active protection metrics, historical checks, and direct access to all security tools.
 
 <p align="center">
   <img src="assets/screenshots/silentvoice_home_dark.png" alt="SilentVoice Dashboard Dark Mode" width="48%" />
   <img src="assets/screenshots/silentvoice_home_light.png" alt="SilentVoice Dashboard Light Mode" width="48%" />
 </p>
 
-- **Statistik Masa Nyata (*Live Counters*):** Memantau jumlah semakan audio (*Semakan*), amaran penipuan yang berjaya dikesan (*Amaran*), dan senarai kenalan disahkan (*Dipercayai*).
-- **Aktiviti Terbaharu (*Recent Activity*):** Merekod sejarah ujian audio terdahulu secara disulitkan di dalam storan tempatan peranti (*offline-first*).
-- **Sokongan Mod Gelap & Terang (*Dark/Light Mode*):** Antara muka direka khas untuk kemudahan membaca dengan teks bersaiz besar (18px) bagi golongan warga emas dan kontras visual yang tinggi.
+- **Real-Time Counters:** Track total audio verifications (*Checks*), detected scam threats (*Flagged*), and authorized senders (*Trusted*).
+- **On-Device Encrypted History:** Automatically logs past verification results in local device storage (*offline-first*), keeping user data strictly private.
+- **Dark & Light Mode Support:** Specially designed for high contrast and readability, featuring large typography (18px base text) optimized for elderly accessibility.
+- **Bilingual Interface:** Instant one-tap toggle between **English** and **Bahasa Melayu** at the top header.
 
 ---
 
-### 2. 🔍 Semak Audio & Pengesanan Klon AI (Audio Verification & Deepfake Screening)
-Mengimbas fail audio WhatsApp yang diterima atau rakaman suara secara langsung untuk mengesan sama ada ia suara manusia asli, klon sintetik AI, atau penipuan kewangan.
+### 2. 🔍 Audio Verification & AI Deepfake Screening
+Inspect received WhatsApp audio messages, voice notes, or microphone recordings to determine whether the speaker is human, a synthetic AI clone, or a social engineering scam.
 
 <p align="center">
   <img src="assets/screenshots/silentvoice_verify_dark.png" alt="SilentVoice Audio Verification Screen" width="60%" />
 </p>
 
-- **Penyahkod Pelbagai Format (*Universal Audio Decoder*):** Menyokong semua format audio umum tanpa memerlukan penukaran format luaran — `.opus`, `.m4a`, `.aac`, `.mp3`, `.wav`, `.ogg`, `.flac`, dan `.webm`.
-- **Saringan Akustik DSP Peranti (*On-Device Acoustic Screening*):** Mengira ciri-ciri fizikal suara manusia (*zero-crossing rate, pitch jitter proxy, high-frequency spectral rolloff*) untuk membezakan modulasi suara semula jadi daripada penjana teks-ke-suara (*TTS/vocoder*).
-- **Pengecaman Corak Bahasa 116 Peraturan (*116 Scam Linguistic Rules*):** Menapis gabungan kata kunci desakan segera (*"sekarang juga"*, *"segera"*), pemindahan wang (*"pindah akaun"*, *"bayar segera"*), penyamaran pihak berkuasa (*"polis"*, *"mahkamah"*, *"lhdn"*), dan arahan merahsiakan (*"jangan bagitahu sesiapa"*).
-- **Kad Keputusan Berperingkat (*Verdict Card*):** Memaparkan keputusan jelas berasaskan warna (Hijau, Merah, Oren, Kelabu), meter risiko, transkrip perkataan, serta 2–3 langkah keselamatan segera yang perlu diambil.
-- **Uji Senario Pantas (*Instant Scenario Demos*):** Butang pratetap 1-ketikan untuk menguji semua 7 kes keselamatan (*AI Voice Clone, Natural Human Voice, Money Scam, Verified Note, Tampered Clip, Replayed Call, Expired Note*).
+- **Universal Audio Decoder:** Seamless client-side decoding supporting all popular audio formats without requiring external conversion — `.opus`, `.m4a`, `.aac`, `.mp3`, `.wav`, `.ogg`, `.flac`, and `.webm`.
+- **On-Device Acoustic DSP Screening:** Measures acoustic physical characteristics (*zero-crossing rate, pitch jitter proxy, and high-frequency spectral rolloff*) to distinguish natural human vocal-tract modulation from TTS/vocoder artifacts.
+- **116 Scam Linguistic Phrase Rules:** Evaluates transcripts against dual-language (EN/BM) scam patterns including artificial urgency (*"transfer now"*, *"immediately"*), banking demands (*"TAC code"*, *"wire payment"*), authority impersonation (*"police"*, *"court"*, *"tax bureau"*), and secrecy coercion (*"tell no one"*).
+- **Multi-Tier Verdict Cards:** Color-coded status banners (Green `VERIFIED`, Red `HIGH RISK` / `TAMPERED`, Orange `MEDIUM RISK`, Gray `LOW RISK`), risk gauges, verbatim speech transcripts, and 2–3 actionable safety recommendations.
+- **1-Tap Instant Scenario Demos:** Dedicated test buttons to preview all 7 security outcomes (*AI Voice Clone, Natural Human Voice, Money Scam, Cryptographically Verified, Tampered Clip, Replayed Call, Expired Note*).
 
 ---
 
-### 3. 📞 Imbas Panggilan Langsung (Real-Time Live Call Scanner)
-Pantau panggilan telefon yang mencurigakan secara masa nyata dengan meletakkan peranti bersebelahan pembesar suara (*speakerphone*).
+### 3. 📞 Real-Time Live Call Scanner
+Monitor suspicious incoming calls in real-time by placing the device next to a speakerphone.
 
 <p align="center">
   <img src="assets/screenshots/silentvoice_live_dark.png" alt="SilentVoice Live Call Scanner" width="60%" />
 </p>
 
-- **Pemantauan Audio Mikrofon Masa Nyata (*Real-Time Level Meter*):** Mengukur gelombang dan aras desibel panggilan masuk secara berterusan.
-- **Transkripsi Percakapan Peranti (*On-Device Captions*):** Menukar perbualan kepada teks secara automatik menggunakan Web Speech API atau enjin Whisper tempatan (*Web Worker*) tanpa menghantar suara ke pelayan awan.
-- **Amaran Haptik & Visual Segera (*Vibration & Red Alert*):** Sebaik sahaja dua tetingkap analisis mengesan corak penipuan atau pemindahan wang, telefon akan bergetar dan skrin bertukar merah dengan arahan: **"LETAK PANGGILAN SEKARANG"**.
+- **Continuous Audio Level Meter:** Real-time visual decibel meter monitoring ambient microphone input and caller volume.
+- **On-Device Speech Transcription:** Live captions generated via browser Web Speech API or local Web Worker Whisper engine without sending raw audio to cloud servers.
+- **Immediate Haptic & Visual Red Alert:** When consecutive analysis windows detect extortion or banking theft patterns, the device vibrates and the screen turns crimson with a stark instruction: **"HANG UP NOW"**.
 
 ---
 
-### 4. ✍️ Tandatangan Suara Kriptografi (Cryptographic Voice Signing & Provenance)
-Mencegah suara anda daripada diklon atau disalah guna dengan memeterai nota suara menggunakan tandatangan kriptografi sebelum dihantar melalui WhatsApp.
+### 4. ✍️ Cryptographic Voice Signing & Provenance
+Prevent your own voice notes from being cloned or manipulated. Sign your voice notes with non-extractable cryptographic keys before sharing them over messaging platforms.
 
 <p align="center">
   <img src="assets/screenshots/silentvoice_sign_dark.png" alt="SilentVoice Voice Signing Screen" width="60%" />
 </p>
 
-- **Kunci Peranti Ed25519 Tanpa Pengekstrakan (*Non-Extractable Keys*):** Kunci kriptografi dijana terus dalam storan perkakasan pelayar melalui WebCrypto (`extractable: false`). Kunci persendirian tidak boleh dicuri atau dimuat turun oleh skrip luar.
-- **Tera Air Kalis WhatsApp (*WhatsApp-Resilient Watermark*):** Menyematkan rujukan tera air akustik dan cap jari persepsi (*Haitsma–Kalker perceptual hash*) yang kekal utuh walaupun fail dimampatkan oleh WhatsApp ke format Opus.
-- **Handoff Terus ke Semakan (*Instant Verification Handoff*):** Selepas menandatangani fail audio, butang *"Semak fail ini sekarang"* membolehkan anda mengesahkan integriti fail tersebut secara serta-merta.
+- **Hardware-Isolated Ed25519 Keys:** Keys are generated directly within browser secure hardware via WebCrypto (`extractable: false`). The private key never leaves the device and cannot be accessed by external scripts.
+- **WhatsApp-Resilient Provenance:** Embeds acoustic watermark references and Haitsma–Kalker perceptual hashes (33 sub-bands) that withstand lossy compression (such as WhatsApp Opus 16 kHz re-encoding).
+- **Direct Verification Handoff:** Once signed, a one-tap button (*"Check it now"*) allows you to immediately verify the file's integrity and signature status.
 
 ---
 
-## 💡 Prinsip Keselamatan Utama (Core Security Law)
+## 💡 Core Security Law
 
-SilentVoice mengasingkan pengesahan identiti dan saringan ancaman secara mutlak:
+SilentVoice enforces strict mathematical separation between cryptographic identity provenance and heuristic threat screening:
 
-| Kategori | Kaedah Operasi | Keputusan Yang Boleh Dikeluarkan |
+| Category | Method | Possible Outcomes |
 | :--- | :--- | :--- |
-| **Pengesahan Ketulenan (Provenance)** | Kriptografi Asimetrik: Tandatangan Ed25519 ke atas cap jari persepsi (*perceptual hashes*) audio | `VERIFIED` · `TAMPERED` · `REPLAYED` · `EXPIRED` |
-| **Saringan Ancaman (Threat Screening)** | Analisis Akustik DSP Peranti + 116 Peraturan Frasa Penipuan BM/EN | Tahap Risiko Sahaja (`LOW`, `MEDIUM`, `HIGH`) — **tidak pernah** `VERIFIED` |
+| **Authenticity & Provenance** | Asymmetric Cryptography: Ed25519 digital signatures over audio perceptual hashes | `VERIFIED` · `TAMPERED` · `REPLAYED` · `EXPIRED` |
+| **Threat Screening** | On-Device DSP Acoustic Analysis + 116 Scam Phrase Rules (EN / BM) | Risk Level Only (`LOW`, `MEDIUM`, `HIGH`) — **never** `VERIFIED` |
 
-> ⚠️ **Hukum Keselamatan Teras:** *Hanya pengesahan kriptografi yang boleh mengeluarkan status `VERIFIED`.* Algoritma AI semata-mata tidak boleh dijadikan asas mempercayai identiti penghantar kerana ia bersifat probabilistik.
+> ⚠️ **Core Security Law:** *Only cryptographic provenance can grant `VERIFIED` status.* Probabilistic AI models can never prove identity, because heuristic acoustic classifiers cannot guarantee zero false positives or resist targeted adversarial synthesis.
 
 ---
 
-## 🏛️ Seni Bina Sistem (Architecture Overview)
+## 🏛️ System Architecture
 
 ![SilentVoice Architecture](assets/architecture.svg)
 
 ```text
-               [Nota Suara WhatsApp / Panggilan Telefon]
+               [WhatsApp Voice Note / Live Phone Call]
                                   │
                                   ▼
       ┌────────────────────────────────────────────────────────┐
       │         SilentVoice PWA Frontend (Next.js 15.5)        │
       │  ├── Universal Audio Decoder (decode.ts)               │
       │  ├── Acoustic DSP Synthetic Voice Filter (dsp.ts)      │
-      │  ├── 116 BM/EN Linguistic Scam Matcher                 │
+      │  ├── 116 EN/BM Linguistic Scam Matcher                 │
       │  └── On-Device Ed25519 WebCrypto Engine                │
       └───────────────────────────┬────────────────────────────┘
-                                  │ (HTTP / WebSocket atau Luar Talian)
+                                  │ (HTTP / WebSocket or Offline Mode)
                                   ▼
       ┌────────────────────────────────────────────────────────┐
-      │          FastAPI Backend Engine (Bilik Kebal)          │
+      │             FastAPI Backend Engine (Vault)             │
       │  ├── 1. Watermark Detection (Spread-Spectrum / AudioSeal)│
       │  ├── 2. Haitsma-Kalker Perceptual Hashing (33 sub-bands)│
       │  ├── 3. Ed25519 Signature Verification                 │
-      │  └── 4. Zero-Audio Retention (RAM Dihapuskan Segera)   │
+      │  └── 4. Zero-Audio Retention (RAM Destroyed Instantly) │
       └────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📋 7 Keputusan Analisis (Decision Outcomes)
+## 📋 7 Decision Outcomes
 
-| Keputusan | Maksud & Syarat Cetusan |
+| Verdict | Trigger Condition & Description |
 | :--- | :--- |
-| `VERIFIED` | Tandatangan digital Ed25519 sah, semua segmen audio sepadan, kunci aktif, dan belum tamat tempoh. |
-| `TAMPERED` | Audio bertandatangan telah disunting, dipotong (*spliced*), atau tandatangan tidak sepadan. |
-| `REPLAYED` | Audio bertandatangan lama dikesan dimainkan semula ke dalam panggilan langsung. |
-| `EXPIRED` | Tandatangan sah tetapi tempoh sah laku (contoh: 7 hari) telah tamat. |
-| `UNVERIFIED (High Risk)` | Suara menunjukkan ciri sintetik AI atau mengandungi desakan kewangan penipuan. |
-| `UNVERIFIED (Medium Risk)` | Mengandungi perkataan berkaitan wang tanpa bukti identiti yang kukuh. |
-| `UNVERIFIED (Low Risk)` | Suara manusia biasa tanpa corak penipuan kewangan (tiada bukti tandatangan penghantar). |
+| `VERIFIED` | Ed25519 digital signature is valid, all audio perceptual hashes match, the device key is active, and the timestamp has not expired. |
+| `TAMPERED` | A signed audio clip was spliced, modified, or has an invalid signature. Do not trust. |
+| `REPLAYED` | An authentic, older signed recording was captured and played back into a live call stream. |
+| `EXPIRED` | Digital signature is authentic, but the validity window (e.g., 7 days) has elapsed. |
+| `UNVERIFIED (High Risk)` | Audio exhibits strong synthetic AI/vocoder acoustic artifacts or contains urgent extortion patterns. |
+| `UNVERIFIED (Medium Risk)` | Contains financial keywords without verified cryptographic identity proof. |
+| `UNVERIFIED (Low Risk)` | Natural human acoustic characteristics without scam patterns (unauthenticated sender). |
 
 ---
 
-## 📁 Struktur Direktori Repositori (Codebase Layout)
+## 📁 Repository Directory Structure
 
 ```text
-api/                     Pelayan FastAPI (Python 3.11)
-  app/core/              Enjin kriptografi, cap jari audio, tera air, peraturan frasa, risiko
-  app/engines/           Penyesuai enjin modular (DSP, Whisper, AudioSeal, XLS-R)
-  app/routes/            Laluan API: /keys, /sessions, /verify, /live, /reports
-  tests/                 26 ujian automatik (CORS, pipeline, codec, replay, tampering)
-web/                     Aplikasi Next.js 15 PWA (TypeScript + Tailwind CSS)
-  src/lib/decode.ts      Penyahkod audio sejagat peranti (WAV, MP3, M4A, OGG, Opus, FLAC)
-  src/lib/dsp.ts         Enjin saringan akustik DSP tempatan (pitch jitter, HF rolloff, ZCR)
-  src/lib/asr.ts         Pengurus transkripsi Whisper peranti berasaskan Web Worker
-  src/lib/provenance.ts  Pemproses tandatangan & pengesanan ubah suai audio tempatan
-  src/lib/live-engine.ts Enjin penganalisis panggilan pembesar suara masa nyata
-  src/lib/history.ts     Pengurusan rekod sejarah semakan dan statistik tempatan
-  src/lib/client-scanner.ts 116 peraturan regex frasa penipuan BM/EN & penggabungan risiko
+api/                     FastAPI Backend Server (Python 3.11)
+  app/core/              Cryptographic engine, perceptual hashing, watermark, scam rules, risk scoring
+  app/engines/           Modular engine adapters (DSP, Whisper, AudioSeal, XLS-R)
+  app/routes/            REST endpoints: /keys, /sessions, /verify, /live, /reports
+  tests/                 26 automated pytest suites (CORS, pipeline, codecs, replay, tampering)
+web/                     Next.js 15 PWA Frontend (TypeScript + Tailwind CSS)
+  src/lib/decode.ts      Universal on-device audio decoder (WAV, MP3, M4A, OGG, Opus, FLAC, WebM)
+  src/lib/dsp.ts         On-device DSP acoustic screening engine (pitch jitter proxy, HF rolloff, ZCR)
+  src/lib/asr.ts         Web Worker Whisper on-device transcription manager
+  src/lib/provenance.ts  Local signature generation & tampering simulation
+  src/lib/live-engine.ts Real-time live call scanner and audio analyzer
+  src/lib/history.ts     On-device verification history and counter persistence
+  src/lib/client-scanner.ts 116 EN/BM scam regex phrase matcher & composite risk scoring
   src/components/        VerdictCard, AppShell, HeaderControls, Sheets, Feedback, Icons
-  public/asr-worker.js   Web Worker untuk pemprosesan transkripsi pertuturan di latar belakang
-eval/                    Skrip penilaian PRD §11 & penjana set data ujian sintetik
-assets/screenshots/      Tangkapan skrin rasmi aplikasi versi terkini
+  public/asr-worker.js   Web Worker for background on-device speech processing
+eval/                    Evaluation scripts & synthetic benchmark generator (PRD Section 11)
+assets/screenshots/      High-resolution Retina screenshots of all application views
 ```
 
 ---
 
-## 🚀 Panduan Menjalankan Projek (Getting Started)
+## 🚀 Getting Started
 
-### Keperluan Sistem:
+### System Requirements:
 - Python 3.10+
-- Node.js 20+ dan npm
+- Node.js 20+ and npm
 
-### 1. Pasang & Jalankan Backend (FastAPI):
+### 1. Install & Run Backend (FastAPI):
 ```bash
 cd api
 python3 -m venv .venv
-source .venv/bin/activate       # Pada Windows: .venv\Scripts\activate
+source .venv/bin/activate       # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt -r requirements-dev.txt
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
-- API Swagger Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
-- API Health Status: [http://localhost:8000/health](http://localhost:8000/health)
+- API Interactive Swagger Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+- API Health Status Check: [http://localhost:8000/health](http://localhost:8000/health)
 
-### 2. Pasang & Jalankan Frontend (Next.js PWA):
+### 2. Install & Run Frontend (Next.js PWA):
 ```bash
 cd web
 npm install
-npm run build                   # Bina eksport statik ke web/out/
-npx serve -s out -l 3001        # Jalankan di port 3001
+npm run build                   # Generates static production export in web/out/
+npx serve -s out -l 3001        # Serves on port 3001
 ```
-- Akses Web Tempatan: [http://localhost:3001](http://localhost:3001)
-- Akses Rangkaian Telefon (LAN Wi-Fi): `http://<IP-Laptop-Anda>:3001`
+- Local Web Access: [http://localhost:3001](http://localhost:3001)
+- Mobile Network Access (LAN Wi-Fi): `http://<your-local-ip>:3001`
 
-### 3. Jalankan Ujian Automatik (Pytest):
+### 3. Run Automated Tests:
 ```bash
 cd api
 .venv/bin/python -m pytest tests -v
 ```
-*(26 daripada 26 ujian keselamatan dan saluran audio lulus 100%).*
+*(26 out of 26 security pipeline and audio verification tests passing 100%).*
 
 ---
 
-## 🌐 Pengeposan Langsung (Live Deployment)
+## 🌐 Live Production Deployment
 
-Versi terkini SilentVoice dihoskan sebagai Progressive Web App di Netlify:
+SilentVoice is deployed and hosted live as a Progressive Web App on Netlify:
 👉 **[https://silentvoice-pwa.netlify.app](https://silentvoice-pwa.netlify.app)**
 
-Aplikasi ini boleh dipasang (*Add to Home Screen*) pada mana-mana telefon pintar iOS atau Android dan berfungsi sepenuhnya di luar talian (*offline*).
+The application can be installed (*Add to Home Screen*) on any modern iOS or Android device and runs fully client-side and offline.
 
 ---
 
-## 📜 Lesen (License)
+## 📜 License
 
-Dilesenkan di bawah [Lesen MIT](LICENSE). Dibina dengan penuh dedikasi untuk melindungi masyarakat Malaysia daripada ancaman jenayah siber dan penipuan suara AI.
+Licensed under the [MIT License](LICENSE). Built to protect people from synthetic voice fraud, AI scams, and cyber extortion.

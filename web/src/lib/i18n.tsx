@@ -4,7 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import { type Lang, type StringKey, t as translate, tKey as translateKey } from "./strings";
 
-const STORAGE_KEY = "suarasah.lang";
+const STORAGE_KEY = "silentvoice.lang";
+const LEGACY_STORAGE_KEY = "suarasah.lang";
 
 interface I18n {
   lang: Lang;
@@ -17,12 +18,14 @@ interface I18n {
 const Ctx = createContext<I18n | null>(null);
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  // Bahasa Melayu is the default (PRD F6), not the browser locale.
-  const [lang, setLangState] = useState<Lang>("ms");
+  // English is the default language, with full Bahasa Melayu support via toggle.
+  const [lang, setLangState] = useState<Lang>("en");
 
   useEffect(() => {
     try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
+      const saved =
+        window.localStorage.getItem(STORAGE_KEY) ||
+        window.localStorage.getItem(LEGACY_STORAGE_KEY);
       if (saved === "ms" || saved === "en") setLangState(saved);
     } catch {
       /* private mode */
@@ -30,7 +33,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    document.documentElement.lang = lang === "ms" ? "ms-MY" : "en-MY";
+    document.documentElement.lang = lang === "ms" ? "ms-MY" : "en";
   }, [lang]);
 
   const setLang = useCallback((next: Lang) => {

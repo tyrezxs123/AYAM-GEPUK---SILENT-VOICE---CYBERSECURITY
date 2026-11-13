@@ -15,7 +15,7 @@ Live Scan path, measures scam-phrase recall and false alarms, and times the veri
 Options: `--api` (default `http://localhost:8000`), `--clips`, `--data`, `--out`.
 
 The API applies rate limits that a full run will trip. For a local evaluation only, start the
-backend with `SUARASAH_RL_DISABLE=1`. Never set that on anything reachable from outside.
+backend with `SILENTVOICE_RL_DISABLE=1` (or `SUARASAH_RL_DISABLE=1`). Never set that on anything reachable from outside.
 
 With no dataset present it falls back to synthetic speech and says so, loudly, in the report.
 
