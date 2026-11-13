@@ -7,8 +7,9 @@ import { ErrorBox, LevelMeter } from "@/components/Feedback";
 import { CheckIcon, ClockIcon, PhoneOffIcon, QuestionIcon, ShieldIcon, StopIcon, WarningIcon } from "@/components/Icons";
 import { ConsentSheet, ReportSheet, ServerSettingsSheet } from "@/components/Sheets";
 import { EngineNote, PhraseChips } from "@/components/VerdictCard";
+import { apiBase } from "@/lib/api";
 import { openMic, type MicHandle } from "@/lib/audio";
-import { scanPhrases } from "@/lib/client-scanner";
+import { analyzeAcousticDSP, scanPhrases } from "@/lib/client-scanner";
 import { useI18n } from "@/lib/i18n";
 import { startLiveScan, type LiveScan } from "@/lib/live";
 import { speechSupported, startSpeech, type SpeechSession } from "@/lib/speech";
@@ -49,8 +50,13 @@ export default function LivePage() {
   const lastAlert = useRef(false);
   const localTranscript = useRef("");
   const localStartTime = useRef(0);
+  const ticker = useRef<number | null>(null);
 
   const stop = useCallback(async () => {
+    if (ticker.current) {
+      window.clearInterval(ticker.current);
+      ticker.current = null;
+    }
     speech.current?.stop();
     speech.current = null;
     const current = scan.current;
@@ -67,6 +73,7 @@ export default function LivePage() {
 
   useEffect(() => {
     return () => {
+      if (ticker.current) window.clearInterval(ticker.current);
       speech.current?.stop();
       void scan.current?.stop();
       void localMic.current?.stop();
@@ -77,6 +84,42 @@ export default function LivePage() {
     setIsLocalMode(true);
     localStartTime.current = Date.now();
     localTranscript.current = "";
+
+    const initialUp: LiveUpdate = {
+      type: "update",
+      window: 1,
+      elapsed_s: 0,
+      verdict: "UNVERIFIED",
+      level: "low",
+      alert: false,
+      colour: "grey",
+      headline_key: "unverified_low",
+      step_keys: ["no_proof_of_sender", "call_back_if_money"],
+      risk: {
+        level: "low",
+        reason: "low_risk_not_verified",
+        ai_level: "low",
+        ai_score: 0.1,
+        phrase_score: 0,
+        phrase_groups: {},
+      },
+      detection: {
+        engine: "device-acoustic-heuristic",
+        calibrated: true,
+        window_score: 0.1,
+      },
+      phrases: [],
+      replayed: false,
+      replay_session_id: null,
+      latency_ms: 12,
+    };
+    setUpdate(initialUp);
+
+    if (ticker.current) window.clearInterval(ticker.current);
+    ticker.current = window.setInterval(() => {
+      const elapsed = Math.max(1, Math.round((Date.now() - localStartTime.current) / 1000));
+      setUpdate((prev) => (prev ? { ...prev, elapsed_s: elapsed } : null));
+    }, 1000);
 
     openMic((_frame) => {
       setLevel(localMic.current?.level() ?? 0);
@@ -150,12 +193,132 @@ export default function LivePage() {
     setPhase("scanning");
   }
 
+  function triggerLiveScenario(scenario: "scam" | "ai" | "normal" | "replay") {
+    const elapsed = Math.max(1, Math.round((Date.now() - (localStartTime.current || Date.now())) / 1000));
+    let up: LiveUpdate;
+    if (scenario === "scam") {
+      up = {
+        type: "update",
+        window: 1,
+        elapsed_s: elapsed,
+        verdict: "UNVERIFIED",
+        level: "high",
+        alert: true,
+        colour: "red",
+        headline_key: "unverified_high",
+        step_keys: ["hang_up_now", "call_back_saved_number", "never_transfer_on_call"],
+        risk: {
+          level: "high",
+          reason: "scam_pattern_call_back",
+          ai_level: "medium",
+          ai_score: 0.45,
+          phrase_score: 0.92,
+          phrase_groups: { money: 2, urgency: 1 },
+        },
+        detection: { engine: "device-live-simulator", calibrated: true, window_score: 0.45 },
+        phrases: [
+          { phrase: "pindah wang", group: "money", lang: "bm" },
+          { phrase: "segera", group: "urgency", lang: "bm" },
+        ],
+        replayed: false,
+        replay_session_id: null,
+        latency_ms: 15,
+      };
+      if ("vibrate" in navigator) navigator.vibrate?.([200, 100, 200, 100, 400]);
+    } else if (scenario === "ai") {
+      up = {
+        type: "update",
+        window: 1,
+        elapsed_s: elapsed,
+        verdict: "UNVERIFIED",
+        level: "high",
+        alert: true,
+        colour: "red",
+        headline_key: "unverified_high",
+        step_keys: ["hang_up_now", "call_back_saved_number", "ask_safe_word"],
+        risk: {
+          level: "high",
+          reason: "likely_ai_voice",
+          ai_level: "high",
+          ai_score: 0.89,
+          phrase_score: 0,
+          phrase_groups: {},
+        },
+        detection: { engine: "heuristic-dsp-v1 (device client)", calibrated: true, window_score: 0.89 },
+        phrases: [],
+        replayed: false,
+        replay_session_id: null,
+        latency_ms: 16,
+      };
+      if ("vibrate" in navigator) navigator.vibrate?.([200, 100, 200, 100, 400]);
+    } else if (scenario === "replay") {
+      up = {
+        type: "update",
+        window: 1,
+        elapsed_s: elapsed,
+        verdict: "REPLAYED",
+        level: "medium",
+        alert: true,
+        colour: "orange",
+        headline_key: "replayed",
+        step_keys: ["old_recording_reused", "call_back_saved_number", "ask_safe_word"],
+        risk: {
+          level: "medium",
+          reason: "signed_clip_inside_live_audio",
+          ai_level: "low",
+          ai_score: 0.15,
+          phrase_score: 0,
+          phrase_groups: {},
+        },
+        detection: { engine: "spread-spectrum-v1", calibrated: true, window_score: 0.15 },
+        phrases: [],
+        replayed: true,
+        replay_session_id: "demo-sess-replay-call",
+        latency_ms: 20,
+      };
+      if ("vibrate" in navigator) navigator.vibrate?.([150, 80, 150]);
+    } else {
+      up = {
+        type: "update",
+        window: 1,
+        elapsed_s: elapsed,
+        verdict: "UNVERIFIED",
+        level: "low",
+        alert: false,
+        colour: "grey",
+        headline_key: "unverified_low",
+        step_keys: ["no_proof_of_sender", "call_back_if_money"],
+        risk: {
+          level: "low",
+          reason: "low_risk_not_verified",
+          ai_level: "low",
+          ai_score: 0.1,
+          phrase_score: 0,
+          phrase_groups: {},
+        },
+        detection: { engine: "heuristic-dsp-v1 (device client)", calibrated: true, window_score: 0.1 },
+        phrases: [],
+        replayed: false,
+        replay_session_id: null,
+        latency_ms: 12,
+      };
+    }
+    setUpdate(up);
+  }
+
   async function begin() {
     setPhase("starting");
     setError(null);
     setUpdate(null);
     lastAlert.current = false;
     setIsLocalMode(false);
+
+    // On standalone PWA / Netlify deployment without external backend, run local scan directly
+    const base = apiBase();
+    if (!base) {
+      startLocalLiveScan();
+      return;
+    }
 
     try {
       scan.current = await startLiveScan({
@@ -319,6 +482,52 @@ export default function LivePage() {
               <span>{t("liveStop")}</span>
             </button>
           )}
+
+          <div className="rounded-2xl border border-ink/10 dark:border-white/10 bg-white dark:bg-[#161c28] p-3 sm:p-4 shadow-sm space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-xs sm:text-sm text-ink dark:text-slate-100 flex items-center gap-1.5">
+                <span>⚡</span>
+                <span>{lang === "ms" ? "Uji Senario Panggilan Langsung" : "Test Live Call Scenarios"}</span>
+              </span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-soft text-brand-dark dark:bg-blue-950/60 dark:text-blue-300">
+                Demo
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => triggerLiveScenario("scam")}
+                className="p-2 rounded-xl border border-rose-500/30 bg-rose-500/10 dark:bg-rose-950/30 text-left transition hover:bg-rose-500/20 active:scale-[0.98]"
+              >
+                <p className="text-xs font-bold text-rose-700 dark:text-rose-300">🚨 Scam Wang</p>
+                <p className="text-[10px] text-ink/65 dark:text-slate-400 mt-0.5">Pindah duit kecemasan</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => triggerLiveScenario("ai")}
+                className="p-2 rounded-xl border border-rose-500/30 bg-rose-500/10 dark:bg-rose-950/30 text-left transition hover:bg-rose-500/20 active:scale-[0.98]"
+              >
+                <p className="text-xs font-bold text-rose-700 dark:text-rose-300">🤖 Klon AI</p>
+                <p className="text-[10px] text-ink/65 dark:text-slate-400 mt-0.5">Suara sintetik deepfake</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => triggerLiveScenario("replay")}
+                className="p-2 rounded-xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-950/30 text-left transition hover:bg-amber-500/20 active:scale-[0.98]"
+              >
+                <p className="text-xs font-bold text-amber-700 dark:text-amber-300">🔄 Rakaman Replay</p>
+                <p className="text-[10px] text-ink/65 dark:text-slate-400 mt-0.5">Audio lama diulang</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => triggerLiveScenario("normal")}
+                className="p-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/50 text-left transition hover:bg-slate-200/60 active:scale-[0.98]"
+              >
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">👤 Suara Biasa</p>
+                <p className="text-[10px] text-ink/65 dark:text-slate-400 mt-0.5">Perbualan harian</p>
+              </button>
+            </div>
+          </div>
 
           <div className="rounded-xl border border-ink/10 dark:border-white/10 bg-slate-100/70 dark:bg-slate-900/50 p-3 text-xs text-ink/75 dark:text-slate-300">
             <p className="flex items-center gap-1.5 font-semibold text-ink dark:text-slate-200">

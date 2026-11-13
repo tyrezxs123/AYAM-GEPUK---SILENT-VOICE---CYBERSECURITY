@@ -7,9 +7,9 @@ import { ErrorBox, LevelMeter, Stepper, Timer } from "@/components/Feedback";
 import { FileIcon, MicIcon, StopIcon } from "@/components/Icons";
 import { ReportSheet, ServerSettingsSheet } from "@/components/Sheets";
 import { VerdictCard } from "@/components/VerdictCard";
-import { verifyAudio } from "@/lib/api";
+import { apiBase, verifyAudio } from "@/lib/api";
 import { startRecording, type Recording } from "@/lib/audio";
-import { verifyAudioClientSide } from "@/lib/client-scanner";
+import { SCENARIO_PRESETS, type ScenarioType, verifyAudioClientSide } from "@/lib/client-scanner";
 import { useI18n } from "@/lib/i18n";
 import { speechSupported, startSpeech, type SpeechSession } from "@/lib/speech";
 import type { VerifyResult } from "@/lib/types";
@@ -58,29 +58,46 @@ export default function VerifyPage() {
     setError(null);
     const text = transcript.current.trim();
 
-    try {
-      const out = await verifyAudio(blob, {
-        filename,
-        source,
-        transcript: text || undefined,
-      });
-      setResult(out);
-      setPhase("done");
-      if (out.colour === "red" && "vibrate" in navigator) navigator.vibrate?.([120, 60, 120]);
-    } catch {
-      // If server is unreachable/offline, or returns 404 (e.g. static hosting on Netlify),
-      // run client-side audio decoding and screening so verification ALWAYS succeeds!
+    const base = apiBase();
+    if (base) {
       try {
-        const clientOut = await verifyAudioClientSide(blob, text, filename);
-        setResult(clientOut);
+        const out = await verifyAudio(blob, {
+          filename,
+          source,
+          transcript: text || undefined,
+        });
+        setResult(out);
         setPhase("done");
-        if (clientOut.colour === "red" && "vibrate" in navigator) {
-          navigator.vibrate?.([120, 60, 120]);
-        }
-      } catch (clientErr) {
-        setError(clientErr instanceof Error ? clientErr.message : String(clientErr));
-        setPhase("error");
+        if (out.colour === "red" && "vibrate" in navigator) navigator.vibrate?.([120, 60, 120]);
+        return;
+      } catch (err) {
+        console.warn("Backend verify failed, falling back to client screening:", err);
       }
+    }
+
+    // Direct, instant client-side verification on Netlify / offline
+    try {
+      // Allow stepper stages (Memeriksa tandatangan -> Mengimbas suara -> Memeriksa perkataan) to advance
+      await new Promise((r) => setTimeout(r, 1200));
+      const clientOut = await verifyAudioClientSide(blob, text, filename);
+      setResult(clientOut);
+      setPhase("done");
+      if (clientOut.colour === "red" && "vibrate" in navigator) {
+        navigator.vibrate?.([120, 60, 120]);
+      }
+    } catch (clientErr) {
+      setError(clientErr instanceof Error ? clientErr.message : String(clientErr));
+      setPhase("error");
+    }
+  }
+
+  function runScenarioTest(type: ScenarioType) {
+    const preset = SCENARIO_PRESETS[type];
+    if (!preset) return;
+    setResult(preset.result);
+    setPhase("done");
+    if (preset.result.colour === "red" && "vibrate" in navigator) {
+      navigator.vibrate?.([120, 60, 120]);
     }
   }
 
@@ -157,6 +174,108 @@ export default function VerifyPage() {
             <MicIcon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
             <span className="truncate">{t("verifyRecord")}</span>
           </button>
+
+          <div className="mt-5 rounded-2xl border border-ink/10 dark:border-white/10 bg-white dark:bg-[#161c28] p-3 sm:p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-xs sm:text-sm text-ink dark:text-slate-100 flex items-center gap-1.5">
+                <span>⚡</span>
+                <span>{lang === "ms" ? "Uji Senario Suara (Semua Kes)" : "Quick Scenario Tests (All Cases)"}</span>
+              </span>
+              <span className="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-brand-soft text-brand-dark dark:bg-blue-950/60 dark:text-blue-300">
+                {lang === "ms" ? "Demo Pantas" : "Fast Demo"}
+              </span>
+            </div>
+            <p className="text-xs text-ink/70 dark:text-slate-300 leading-relaxed">
+              {lang === "ms"
+                ? "Ketik senario di bawah untuk melihat penilaian keselamatan, corak risiko, dan tindakan yang disyorkan:"
+                : "Tap any scenario below to evaluate voice safety, risk pattern, and recommended actions:"}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => runScenarioTest("ai_voice")}
+                className="text-left rounded-xl border border-rose-500/30 bg-rose-500/10 dark:bg-rose-950/30 p-2.5 transition hover:bg-rose-500/20 active:scale-[0.99]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-rose-700 dark:text-rose-300">🤖 {lang === "ms" ? "Klon Suara AI" : "AI Voice Clone"}</span>
+                  <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-rose-500 text-white">High Risk</span>
+                </div>
+                <p className="text-[11px] text-ink/70 dark:text-slate-300 mt-1 line-clamp-1">{SCENARIO_PRESETS.ai_voice[lang === "ms" ? "description_bm" : "description_en"]}</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => runScenarioTest("human_voice")}
+                className="text-left rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/50 p-2.5 transition hover:bg-slate-200/60 active:scale-[0.99]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-slate-700 dark:text-slate-300">👤 {lang === "ms" ? "Suara Manusia Asli" : "Natural Human Voice"}</span>
+                  <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-slate-500 text-white">Low Risk</span>
+                </div>
+                <p className="text-[11px] text-ink/70 dark:text-slate-300 mt-1 line-clamp-1">{SCENARIO_PRESETS.human_voice[lang === "ms" ? "description_bm" : "description_en"]}</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => runScenarioTest("scam_urgency")}
+                className="text-left rounded-xl border border-rose-500/30 bg-rose-500/10 dark:bg-rose-950/30 p-2.5 transition hover:bg-rose-500/20 active:scale-[0.99]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-rose-700 dark:text-rose-300">🚨 {lang === "ms" ? "Scam Pindah Duit" : "Urgent Money Scam"}</span>
+                  <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-rose-500 text-white">Red Alert</span>
+                </div>
+                <p className="text-[11px] text-ink/70 dark:text-slate-300 mt-1 line-clamp-1">{SCENARIO_PRESETS.scam_urgency[lang === "ms" ? "description_bm" : "description_en"]}</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => runScenarioTest("verified")}
+                className="text-left rounded-xl border border-emerald-500/30 bg-emerald-500/10 dark:bg-emerald-950/30 p-2.5 transition hover:bg-emerald-500/20 active:scale-[0.99]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-emerald-700 dark:text-emerald-300">✅ {lang === "ms" ? "Tandatangan Sah" : "Verified Audio"}</span>
+                  <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-emerald-600 text-white">Verified</span>
+                </div>
+                <p className="text-[11px] text-ink/70 dark:text-slate-300 mt-1 line-clamp-1">{SCENARIO_PRESETS.verified[lang === "ms" ? "description_bm" : "description_en"]}</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => runScenarioTest("tampered")}
+                className="text-left rounded-xl border border-rose-500/30 bg-rose-500/10 dark:bg-rose-950/30 p-2.5 transition hover:bg-rose-500/20 active:scale-[0.99]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-rose-700 dark:text-rose-300">✂️ {lang === "ms" ? "Audio Diubah" : "Tampered Clip"}</span>
+                  <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-rose-600 text-white">Tampered</span>
+                </div>
+                <p className="text-[11px] text-ink/70 dark:text-slate-300 mt-1 line-clamp-1">{SCENARIO_PRESETS.tampered[lang === "ms" ? "description_bm" : "description_en"]}</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => runScenarioTest("replayed")}
+                className="text-left rounded-xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-950/30 p-2.5 transition hover:bg-amber-500/20 active:scale-[0.99]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-amber-700 dark:text-amber-300">🔄 {lang === "ms" ? "Rakaman Berulang" : "Replayed Call"}</span>
+                  <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-600 text-white">Replayed</span>
+                </div>
+                <p className="text-[11px] text-ink/70 dark:text-slate-300 mt-1 line-clamp-1">{SCENARIO_PRESETS.replayed[lang === "ms" ? "description_bm" : "description_en"]}</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => runScenarioTest("expired")}
+                className="text-left rounded-xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-950/30 p-2.5 transition hover:bg-amber-500/20 active:scale-[0.99] sm:col-span-2"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs text-amber-700 dark:text-amber-300">⏳ {lang === "ms" ? "Tamat Tempoh (Expired)" : "Expired Signature"}</span>
+                  <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-600 text-white">Expired</span>
+                </div>
+                <p className="text-[11px] text-ink/70 dark:text-slate-300 mt-1 line-clamp-1">{SCENARIO_PRESETS.expired[lang === "ms" ? "description_bm" : "description_en"]}</p>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -198,6 +317,34 @@ export default function VerifyPage() {
           <button type="button" className="secondary-button" onClick={reset}>
             {t("verifyAgain")}
           </button>
+
+          <div className="rounded-2xl border border-ink/10 dark:border-white/10 bg-white dark:bg-[#161c28] p-3 sm:p-4 shadow-sm space-y-2.5">
+            <p className="text-xs font-bold text-ink/70 dark:text-slate-300">
+              ⚡ {lang === "ms" ? "Tukar & Uji Senario Lain:" : "Switch & Test Other Scenarios:"}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {(
+                [
+                  ["ai_voice", "🤖 AI Clone"],
+                  ["human_voice", "👤 Human"],
+                  ["scam_urgency", "🚨 Scam Call"],
+                  ["verified", "✅ Verified"],
+                  ["tampered", "✂️ Tampered"],
+                  ["replayed", "🔄 Replayed"],
+                  ["expired", "⏳ Expired"],
+                ] as const
+              ).map(([scKey, scLabel]) => (
+                <button
+                  key={scKey}
+                  type="button"
+                  onClick={() => runScenarioTest(scKey)}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-ink/10 dark:border-white/10 bg-slate-50 dark:bg-slate-800 text-ink/80 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 active:scale-95 transition"
+                >
+                  {scLabel}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

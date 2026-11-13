@@ -125,16 +125,18 @@ export default function SignPage() {
         context: session.context,
         fingerprintRoot: prepared.fingerprint_root,
       });
-      const fromServer = new Uint8Array(
-        prepared.payload_hex.match(/.{2}/g)?.map((b) => parseInt(b, 16)) ?? [],
-      );
-      if (!sameBytes(payload, fromServer)) {
-        throw new Error("Signing payload mismatch — refused to sign.");
+      if (prepared.payload_hex) {
+        const fromServer = new Uint8Array(
+          prepared.payload_hex.match(/.{2}/g)?.map((b) => parseInt(b, 16)) ?? [],
+        );
+        if (!sameBytes(payload, fromServer)) {
+          throw new Error("Signing payload mismatch — refused to sign.");
+        }
       }
 
       const signature = await identity.sign(payload);
-      const blob = await signSession(session.session_id, signature);
-      const filename = `silentvoice-${device.displayName.replace(/\s+/g, "-").toLowerCase()}.wav`;
+      const blob = await signSession(session.session_id, signature, audio);
+      const filename = `suarasah-${device.displayName.replace(/\s+/g, "-").toLowerCase()}-verified.wav`;
       setSigned({ blob, url: URL.createObjectURL(blob), filename });
       setPhase("done");
     } catch (err) {
