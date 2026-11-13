@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                var theme = localStorage.getItem('suarasah.theme');
+                var theme = localStorage.getItem('silentvoice.theme') || localStorage.getItem('suarasah.theme');
                 var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 if (theme === 'dark' || (theme !== 'light' && prefersDark)) {
                   document.documentElement.classList.add('dark');

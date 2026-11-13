@@ -19,7 +19,8 @@ COPY api/ /app/
 # Application configuration
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
-ENV SUARASAH_DB=/app/data/suarasah.db
+ENV SILENTVOICE_DB=/app/data/silentvoice.db
+ENV SUARASAH_DB=/app/data/silentvoice.db
 
 # Ensure data directory for SQLite exists
 RUN mkdir -p /app/data

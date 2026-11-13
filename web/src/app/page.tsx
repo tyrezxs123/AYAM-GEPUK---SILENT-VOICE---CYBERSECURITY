@@ -38,8 +38,12 @@ export default function Home() {
       setStats({ checks: s.checks, flagged: s.flagged, trusted: listTrusted().length });
     };
     load();
+    window.addEventListener("silentvoice:history", load);
     window.addEventListener("suarasah:history", load);
-    return () => window.removeEventListener("suarasah:history", load);
+    return () => {
+      window.removeEventListener("silentvoice:history", load);
+      window.removeEventListener("suarasah:history", load);
+    };
   }, []);
 
   const actions = [

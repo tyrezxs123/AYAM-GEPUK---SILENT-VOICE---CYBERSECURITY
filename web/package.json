@@ -1,8 +1,8 @@
 {
-  "name": "suarasah-web",
+  "name": "silentvoice-web",
   "version": "0.1.0",
   "private": true,
-  "description": "SuaraSah - mobile-first PWA: verify voice provenance, warn about AI voices",
+  "description": "SilentVoice - mobile-first PWA: verify voice provenance, warn about AI voices",
   "scripts": {
     "dev": "next dev",
     "dev:lan": "next dev -H 0.0.0.0",

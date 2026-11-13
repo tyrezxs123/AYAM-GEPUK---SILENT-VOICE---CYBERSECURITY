@@ -1,4 +1,4 @@
-# SuaraSah API - core runtime (no GPU / no multi-GB downloads required)
+# SilentVoice API - core runtime (no GPU / no multi-GB downloads required)
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 python-multipart==0.0.20

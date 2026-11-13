@@ -182,9 +182,10 @@ def sign(session_id: str, request: Request, signature: str = Form(...)) -> Respo
         content=wav,
         media_type="audio/wav",
         headers={
-            "Content-Disposition": f'attachment; filename="suarasah-{session_id[:8]}.wav"',
+            "Content-Disposition": f'attachment; filename="silentvoice-{session_id[:8]}.wav"',
+            "X-SilentVoice-Session": session_id,
+            "X-SilentVoice-Segments": str(len(pending.fingerprints)),
             "X-SuaraSah-Session": session_id,
-            "X-SuaraSah-Segments": str(len(pending.fingerprints)),
         },
     )
 

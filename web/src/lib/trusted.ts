@@ -7,7 +7,7 @@
  * name appears we warn, and the receiver decides to trust that specific
  * device key - not the display name.
  */
-const KEY = "suarasah.trusted";
+const KEY = "silentvoice.trusted";
 
 export interface TrustedSender {
   /** The session's signing identity: name plus the key that signed it. */
@@ -21,7 +21,7 @@ type Store = Record<string, TrustedSender>;
 function read(): Store {
   if (typeof window === "undefined") return {};
   try {
-    return JSON.parse(window.localStorage.getItem(KEY) ?? "{}") as Store;
+    return JSON.parse(window.localStorage.getItem(KEY) ?? window.localStorage.getItem("suarasah.trusted") ?? "{}") as Store;
   } catch {
     return {};
   }

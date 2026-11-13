@@ -16,7 +16,7 @@ import { makeTamperedCopy, signOnDevice, type SignedClip } from "@/lib/provenanc
 
 type Phase = "register" | "idle" | "recording" | "signing" | "done" | "error";
 
-const DEVICE_KEY = "suarasah.device";
+const DEVICE_KEY = "silentvoice.device";
 const MAX_SECONDS = 60;
 
 interface Device {
@@ -27,7 +27,7 @@ interface Device {
 
 function loadDevice(): Device | null {
   try {
-    const raw = window.localStorage.getItem(DEVICE_KEY);
+    const raw = window.localStorage.getItem(DEVICE_KEY) ?? window.localStorage.getItem("suarasah.device");
     const d = raw ? (JSON.parse(raw) as Partial<Device>) : null;
     return d && d.displayName ? { displayName: d.displayName, publicKey: d.publicKey ?? "", backend: d.backend ?? "" } : null;
   } catch {

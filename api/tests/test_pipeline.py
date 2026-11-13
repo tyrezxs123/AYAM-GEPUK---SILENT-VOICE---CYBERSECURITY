@@ -15,9 +15,11 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-os.environ["SUARASAH_DB"] = os.path.join(tempfile.gettempdir(), "suarasah-test.db")
+os.environ["SILENTVOICE_DB"] = os.path.join(tempfile.gettempdir(), "silentvoice-test.db")
+os.environ["SUARASAH_DB"] = os.environ["SILENTVOICE_DB"]
+os.environ["SILENTVOICE_RL_DISABLE"] = "1"
 os.environ["SUARASAH_RL_DISABLE"] = "1"  # the suite signs far more clips than a human would
-for _leftover in (os.environ["SUARASAH_DB"], os.environ["SUARASAH_DB"] + "-wal"):
+for _leftover in (os.environ["SILENTVOICE_DB"], os.environ["SILENTVOICE_DB"] + "-wal"):
     if os.path.exists(_leftover):
         os.remove(_leftover)
 

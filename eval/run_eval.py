@@ -1,4 +1,4 @@
-"""Measure every claim in PRD Section 11 against a running SuaraSah API.
+"""Measure every claim in PRD Section 11 against a running SilentVoice API.
 
     cd api && .venv/Scripts/python ../eval/run_eval.py
 

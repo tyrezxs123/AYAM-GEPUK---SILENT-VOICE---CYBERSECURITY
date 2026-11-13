@@ -2,7 +2,7 @@
 # Make a self-signed TLS certificate for demoing on a phone over the venue LAN.
 #
 #   ./scripts/make-dev-cert.sh            # auto-detects this machine's LAN IPs
-#   ./scripts/make-dev-cert.sh 192.168.0.12 suarasah.local
+#   ./scripts/make-dev-cert.sh 192.168.0.12 silentvoice.local
 #
 # Why this is needed at all: getUserMedia() only works in a secure context.
 # localhost counts as secure, a plain http://192.168.x.x does NOT - so the
@@ -43,7 +43,7 @@ echo "Subject alternative names: $san"
 
 openssl req -x509 -nodes -newkey rsa:2048 -sha256 -days 365 \
   -keyout "$out/dev.key" -out "$out/dev.crt" \
-  -subj "/CN=SuaraSah dev" \
+  -subj "/CN=SilentVoice dev" \
   -addext "subjectAltName=$san" \
   -addext "basicConstraints=critical,CA:FALSE" \
   -addext "keyUsage=critical,digitalSignature,keyEncipherment" \

@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 export type Theme = "light" | "dark" | "system";
 
-const STORAGE_KEY = "suarasah.theme";
+const STORAGE_KEY = "silentvoice.theme";
 
 interface ThemeContextValue {
   theme: Theme;

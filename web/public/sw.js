@@ -5,7 +5,7 @@
  * Only the app shell is cached. Other caches (the on-device speech model that
  * transformers.js stores) are left alone.
  */
-const CACHE = "suarasah-shell-v3";
+const CACHE = "silentvoice-shell-v3";
 const SHELL = ["/", "/verify", "/live", "/sign", "/manifest.webmanifest", "/pcm-worklet.js", "/asr-worker.js"];
 
 self.addEventListener("install", (event) => {
@@ -19,7 +19,13 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("suarasah-") && k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((k) => (k.startsWith("silentvoice-") || k.startsWith("suarasah-")) && k !== CACHE)
+            .map((k) => caches.delete(k)),
+        ),
+      )
       .then(() => self.clients.claim()),
   );
 });

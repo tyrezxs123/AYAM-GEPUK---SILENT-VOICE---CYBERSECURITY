@@ -9,13 +9,13 @@
  */
 import type { VerifyResult } from "./types";
 
-const API_STORAGE_KEY = "suarasah.api_base";
+const API_STORAGE_KEY = "silentvoice.api_base";
 const DEFAULT_TIMEOUT_MS = 8000;
 
 export function getSavedApiBase(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem(API_STORAGE_KEY);
+    return window.localStorage.getItem(API_STORAGE_KEY) ?? window.localStorage.getItem("suarasah.api_base");
   } catch {
     return null;
   }
@@ -24,8 +24,12 @@ export function getSavedApiBase(): string | null {
 export function setSavedApiBase(url: string | null): void {
   if (typeof window === "undefined") return;
   try {
-    if (!url || !url.trim()) window.localStorage.removeItem(API_STORAGE_KEY);
-    else window.localStorage.setItem(API_STORAGE_KEY, url.trim().replace(/\/$/, ""));
+    if (!url || !url.trim()) {
+      window.localStorage.removeItem(API_STORAGE_KEY);
+      window.localStorage.removeItem("suarasah.api_base");
+    } else {
+      window.localStorage.setItem(API_STORAGE_KEY, url.trim().replace(/\/$/, ""));
+    }
   } catch {
     /* ignore storage errors */
   }

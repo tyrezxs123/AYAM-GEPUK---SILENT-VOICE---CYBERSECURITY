@@ -19,7 +19,7 @@ router = APIRouter(tags=["reports"])
 
 # A per-deployment pepper, so a stolen table cannot be brute-forced back into
 # a list of phone numbers (the number space is tiny without it).
-PEPPER = os.environ.get("SUARASAH_REPORT_PEPPER", "suarasah-dev-pepper")
+PEPPER = os.environ.get("SILENTVOICE_REPORT_PEPPER", os.environ.get("SUARASAH_REPORT_PEPPER", "silentvoice-dev-pepper"))
 
 CATEGORIES = {"voice_clone", "fake_authority", "money_request", "other"}
 

@@ -20,7 +20,7 @@ from .engines import registry
 from .routes import keys, live, reports, sessions, verify
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-log = logging.getLogger("suarasah")
+log = logging.getLogger("silentvoice")
 
 
 @asynccontextmanager
@@ -74,7 +74,7 @@ app.add_middleware(
     **cors_kwargs,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["X-SuaraSah-Session", "X-SuaraSah-Segments", "Content-Disposition"],
+    expose_headers=["X-SilentVoice-Session", "X-SilentVoice-Segments", "X-SuaraSah-Session", "X-SuaraSah-Segments", "Content-Disposition"],
 )
 
 app.include_router(keys.router)

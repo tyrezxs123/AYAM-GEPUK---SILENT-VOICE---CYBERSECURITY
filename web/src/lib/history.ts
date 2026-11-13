@@ -4,7 +4,7 @@
  */
 import type { Colour, Level, Verdict, VerifyResult } from "./types";
 
-const KEY = "suarasah.history";
+const KEY = "silentvoice.history";
 const MAX = 25;
 
 export type HistoryKind = "file" | "record" | "live" | "sign";
@@ -23,7 +23,7 @@ export interface HistoryEntry {
 function read(): HistoryEntry[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = JSON.parse(window.localStorage.getItem(KEY) ?? "[]");
+    const raw = JSON.parse(window.localStorage.getItem(KEY) ?? window.localStorage.getItem("suarasah.history") ?? "[]");
     return Array.isArray(raw) ? (raw as HistoryEntry[]) : [];
   } catch {
     return [];
@@ -33,6 +33,7 @@ function read(): HistoryEntry[] {
 function write(list: HistoryEntry[]): void {
   try {
     window.localStorage.setItem(KEY, JSON.stringify(list.slice(0, MAX)));
+    window.dispatchEvent(new Event("silentvoice:history"));
     window.dispatchEvent(new Event("suarasah:history"));
   } catch {
     /* private mode: history simply does not persist */

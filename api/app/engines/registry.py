@@ -16,7 +16,7 @@ from .base import DetectionScore, Transcript
 from .detector_heuristic import HeuristicDetector
 from .transcriber_whisper import NullTranscriber
 
-log = logging.getLogger("suarasah.engines")
+log = logging.getLogger("silentvoice.engines")
 
 __all__ = [
     "detector",

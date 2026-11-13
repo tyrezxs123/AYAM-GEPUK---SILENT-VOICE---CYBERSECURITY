@@ -16,7 +16,7 @@ import hashlib
 from nacl.exceptions import BadSignatureError
 from nacl.signing import VerifyKey
 
-DOMAIN = b"SuaraSah/v1/voice-session"
+DOMAIN = b"SilentVoice/v1/voice-session"
 
 
 def _field(b: bytes) -> bytes:

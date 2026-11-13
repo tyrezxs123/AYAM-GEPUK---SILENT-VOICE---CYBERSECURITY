@@ -16,7 +16,7 @@ import { sha512 } from "@noble/hashes/sha512";
 // @noble/ed25519 v2 needs a sha512 implementation wired in explicitly.
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
-const DB_NAME = "suarasah";
+const DB_NAME = "silentvoice";
 const STORE = "identity";
 const KEY_ID = "device-key-v1";
 
@@ -165,7 +165,7 @@ export async function getIdentity(): Promise<Identity> {
 }
 
 // --- the canonical signing payload ----------------------------------------
-const DOMAIN = "SuaraSah/v1/voice-session";
+const DOMAIN = "SilentVoice/v1/voice-session";
 
 function field(bytes: Uint8Array): Uint8Array {
   const out = new Uint8Array(4 + bytes.length);
