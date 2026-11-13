@@ -173,6 +173,26 @@ const ms = {
   disclaimerTitle: "Privasi & Penafian",
   disclaimerBody: "Audio diproses terus dalam ingatan peranti & pelayan dan tidak disimpan. Saringan suara AI memberi panduan risiko awal, bukan bukti mutlak.",
   technicalDetails: "Maklumat Teknikal",
+
+  // server settings & offline screening
+  serverSettings: "Tetapan Pelayan",
+  serverSettingsTitle: "Tetapan Pelayan API",
+  serverSettingsHint: "Tetapkan alamat pelayan backend jika anda menguji pada telefon mudah alih atau domain deployed.",
+  serverUrlLabel: "URL Pelayan API",
+  serverUrlPlaceholder: "cth: http://192.168.1.50:8000",
+  serverTestBtn: "Uji Sambungan",
+  serverSaveBtn: "Simpan Tetapan",
+  serverResetBtn: "Guna Lalai (Auto)",
+  serverConnected: "Bersambung ke pelayan!",
+  serverFailed: "Tidak dapat menyambung",
+  serverTesting: "Menguji sambungan…",
+  serverStatusConnected: "Pelayan Aktif",
+  serverStatusOffline: "Luar Talian",
+  offlineModeNotice: "Mod Saringan Peranti (Luar Talian)",
+  offlineModeDesc: "Pelayan backend tidak dapat dihubungi. Corak perkataan dinilai terus pada peranti anda.",
+  liveLocalMode: "Mod Imbasan Tempatan",
+  liveLocalDesc: "Mengimbas perkataan panggilan terus pada telefon ini tanpa pelayan.",
+  openServerSettings: "Buka Tetapan Pelayan",
 };
 
 const en: Record<keyof typeof ms, string> = {
@@ -326,6 +346,26 @@ const en: Record<keyof typeof ms, string> = {
   disclaimerTitle: "Privacy & Disclaimer",
   disclaimerBody: "Audio is processed purely in memory and never stored on servers. AI voice screening provides risk guidance, not definitive proof.",
   technicalDetails: "Technical Details",
+
+  // server settings & offline screening
+  serverSettings: "Server Settings",
+  serverSettingsTitle: "API Server Settings",
+  serverSettingsHint: "Configure the backend server URL if testing on mobile or deployed domain.",
+  serverUrlLabel: "API Server URL",
+  serverUrlPlaceholder: "e.g. http://192.168.1.50:8000",
+  serverTestBtn: "Test Connection",
+  serverSaveBtn: "Save Settings",
+  serverResetBtn: "Use Default (Auto)",
+  serverConnected: "Connected to server!",
+  serverFailed: "Could not connect",
+  serverTesting: "Testing connection…",
+  serverStatusConnected: "Server Active",
+  serverStatusOffline: "Offline",
+  offlineModeNotice: "Device Screening (Offline Mode)",
+  offlineModeDesc: "Backend server unreachable. Phrase patterns evaluated directly on this device.",
+  liveLocalMode: "Local Device Scan Mode",
+  liveLocalDesc: "Scanning speech directly on this phone without server connection.",
+  openServerSettings: "Open Server Settings",
 };
 
 export type StringKey = keyof typeof ms;

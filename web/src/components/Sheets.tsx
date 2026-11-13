@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 
-import { reportNumber } from "@/lib/api";
+import { apiBase, getSavedApiBase, health, reportNumber, setSavedApiBase } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { ServerIcon } from "./Icons";
 
 /** Bottom sheet shell: thumb-reachable on a phone, dismissible by backdrop tap. */
 function Sheet({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
@@ -106,6 +107,149 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
       >
         {t("semakMule")}
       </a>
+    </Sheet>
+  );
+}
+
+export function ServerSettingsSheet({
+  onClose,
+  onSaved,
+}: {
+  onClose: () => void;
+  onSaved?: () => void;
+}) {
+  const { t } = useI18n();
+  const [url, setUrl] = useState(() => getSavedApiBase() ?? apiBase());
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  async function testConnection(targetUrl: string) {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const res = await health(targetUrl);
+      if (res.ok) {
+        setTestResult({ ok: true, message: t("serverConnected") });
+      } else {
+        setTestResult({ ok: false, message: t("serverFailed") });
+      }
+    } catch (err) {
+      setTestResult({
+        ok: false,
+        message: `${t("serverFailed")}: ${err instanceof Error ? err.message : String(err)}`,
+      });
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  function save() {
+    setSavedApiBase(url.trim());
+    onSaved?.();
+    onClose();
+  }
+
+  function reset() {
+    setSavedApiBase(null);
+    setUrl(apiBase());
+    setTestResult(null);
+    onSaved?.();
+    onClose();
+  }
+
+  return (
+    <Sheet onClose={onClose}>
+      <div className="flex items-center gap-2.5">
+        <ServerIcon className="h-6 w-6 text-brand dark:text-blue-400" />
+        <h2 className="text-xl font-bold text-ink dark:text-slate-100">{t("serverSettingsTitle")}</h2>
+      </div>
+
+      <p className="mt-2 text-sm text-ink/70 dark:text-slate-300">
+        {t("serverSettingsHint")}
+      </p>
+
+      <div className="mt-4 space-y-3">
+        <div>
+          <label className="block text-sm font-semibold text-ink/80 dark:text-slate-200" htmlFor="server-url">
+            {t("serverUrlLabel")}
+          </label>
+          <input
+            id="server-url"
+            type="url"
+            className="field mt-1 w-full text-sm font-mono"
+            placeholder={t("serverUrlPlaceholder")}
+            value={url}
+            onChange={(e) => {
+              setUrl(e.target.value);
+              setTestResult(null);
+            }}
+          />
+        </div>
+
+        {/* Quick helpers */}
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          <button
+            type="button"
+            className="rounded-lg border border-ink/15 dark:border-white/15 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-ink/75 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+            onClick={() => {
+              const lan = `http://${typeof window !== "undefined" ? window.location.hostname : "127.0.0.1"}:8000`;
+              setUrl(lan);
+              void testConnection(lan);
+            }}
+          >
+            LAN :8000
+          </button>
+          <button
+            type="button"
+            className="rounded-lg border border-ink/15 dark:border-white/15 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-ink/75 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+            onClick={() => {
+              setUrl("http://127.0.0.1:8000");
+              void testConnection("http://127.0.0.1:8000");
+            }}
+          >
+            127.0.0.1:8000
+          </button>
+        </div>
+
+        {/* Test Connection Button & Status */}
+        <div className="pt-2">
+          <button
+            type="button"
+            className="secondary-button !min-h-[2.75rem] !py-2 text-sm"
+            disabled={testing || !url.trim()}
+            onClick={() => testConnection(url.trim())}
+          >
+            {testing ? t("serverTesting") : t("serverTestBtn")}
+          </button>
+
+          {testResult && (
+            <p
+              className={`mt-2 rounded-xl p-2.5 text-xs font-semibold ${
+                testResult.ok
+                  ? "bg-verdict-greenbg text-verdict-green dark:bg-emerald-950/40 dark:text-emerald-400 border border-verdict-green/30"
+                  : "bg-verdict-redbg text-verdict-red dark:bg-rose-950/40 dark:text-rose-400 border border-verdict-red/30"
+              }`}
+            >
+              {testResult.ok ? "✓ " : "⚠️ "}
+              {testResult.message}
+            </p>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-3">
+          <button type="button" className="primary-button !min-h-[2.75rem] !py-2.5 text-sm flex-1" onClick={save}>
+            {t("serverSaveBtn")}
+          </button>
+          <button
+            type="button"
+            className="secondary-button !min-h-[2.75rem] !py-2.5 text-sm shrink-0 px-4"
+            onClick={reset}
+          >
+            {t("serverResetBtn")}
+          </button>
+        </div>
+      </div>
     </Sheet>
   );
 }

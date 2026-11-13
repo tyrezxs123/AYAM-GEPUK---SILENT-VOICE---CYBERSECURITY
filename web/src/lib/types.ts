@@ -56,6 +56,7 @@ export interface VerifyResult {
   detection?: { engine: string; calibrated: boolean; per_chunk: number[]; features: Record<string, number> };
   transcript?: { text: string; language: string; engine: string; available: boolean };
   phrases?: PhraseHit[];
+  offline_screening?: boolean;
 }
 
 export interface SessionOut {

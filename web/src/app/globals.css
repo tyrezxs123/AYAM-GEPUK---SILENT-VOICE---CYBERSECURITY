@@ -4,9 +4,18 @@
 
 @layer base {
   html {
-    /* 18px base: the primary persona is 62 and reading on a 360px screen */
-    font-size: 18px;
+    /* 16px root ensures 1.125rem is exactly 18px body font on mobile (PRD persona 62yo) without double-scaling out-of-bounds */
+    font-size: 16px;
     -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  @media (min-width: 640px) {
+    html {
+      font-size: 17px;
+    }
   }
 
   body {
@@ -17,6 +26,15 @@
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     overscroll-behavior-y: none;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
   }
 
   /* Tapping should never zoom or select text on this app */
@@ -33,41 +51,41 @@
 
 @layer components {
   .screen {
-    @apply mx-auto w-full max-w-md px-4 pb-10;
+    @apply mx-auto w-full max-w-md px-3 sm:px-4 pb-10 overflow-x-hidden;
   }
 
   .big-button {
-    @apply flex w-full items-center gap-4 rounded-2xl border-2 px-5 py-5 text-left
-           transition active:scale-[0.985] shadow-sm;
+    @apply flex w-full items-center gap-3 sm:gap-4 rounded-2xl border-2 px-4 py-4 sm:px-5 sm:py-5 text-left
+           transition active:scale-[0.985] shadow-sm min-w-0;
     min-height: theme("spacing.tap");
   }
 
   .primary-button {
-    @apply flex w-full items-center justify-center gap-3 rounded-2xl bg-brand hover:bg-brand-dark px-5 py-4
-           text-lg font-semibold text-white shadow-sm transition
-           active:scale-[0.985] disabled:opacity-50 disabled:active:scale-100;
+    @apply flex w-full items-center justify-center gap-2 sm:gap-3 rounded-2xl bg-brand hover:bg-brand-dark px-4 py-3.5 sm:px-5 sm:py-4
+           text-base sm:text-lg font-semibold text-white shadow-sm transition
+           active:scale-[0.985] disabled:opacity-50 disabled:active:scale-100 min-w-0;
     min-height: theme("spacing.tap");
   }
 
   .secondary-button {
-    @apply flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-ink/15 dark:border-white/15
-           bg-white dark:bg-[#161c28] px-5 py-4 text-lg font-semibold text-ink dark:text-slate-100 transition
-           hover:bg-slate-100 dark:hover:bg-[#1f2738] active:scale-[0.985] disabled:opacity-50;
+    @apply flex w-full items-center justify-center gap-2 sm:gap-3 rounded-2xl border-2 border-ink/15 dark:border-white/15
+           bg-white dark:bg-[#161c28] px-4 py-3.5 sm:px-5 sm:py-4 text-base sm:text-lg font-semibold text-ink dark:text-slate-100 transition
+           hover:bg-slate-100 dark:hover:bg-[#1f2738] active:scale-[0.985] disabled:opacity-50 min-w-0;
     min-height: theme("spacing.tap");
   }
 
   .field {
-    @apply w-full rounded-xl border-2 border-ink/15 dark:border-white/15 bg-white dark:bg-[#161c28] px-4 py-3 text-base
+    @apply w-full max-w-full rounded-xl border-2 border-ink/15 dark:border-white/15 bg-white dark:bg-[#161c28] px-3.5 py-2.5 sm:px-4 sm:py-3 text-base
            text-ink dark:text-slate-100 placeholder:text-ink/35 dark:placeholder:text-slate-400 focus:border-brand dark:focus:border-blue-400 focus:outline-none;
     min-height: 3rem;
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold;
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-xs sm:text-sm font-semibold max-w-full break-words;
   }
 
   .card {
-    @apply rounded-2xl border-2 p-5 bg-white dark:bg-[#161c28];
+    @apply rounded-2xl border-2 p-4 sm:p-5 bg-white dark:bg-[#161c28] w-full max-w-full;
   }
 }
 

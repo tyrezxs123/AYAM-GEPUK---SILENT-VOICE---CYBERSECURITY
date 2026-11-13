@@ -28,3 +28,20 @@
   [headers.values]
     Content-Type = "application/manifest+json"
     Cache-Control = "public, max-age=86400"
+
+# Clean URL and SPA fallback redirects
+[[redirects]]
+  from = "/verify"
+  to = "/verify.html"
+  status = 200
+
+[[redirects]]
+  from = "/live"
+  to = "/live.html"
+  status = 200
+
+[[redirects]]
+  from = "/sign"
+  to = "/sign.html"
+  status = 200
+

@@ -109,12 +109,12 @@ function SegmentStrip({ result }: { result: VerifyResult }) {
   return (
     <div className="space-y-2">
       <p className="text-sm font-bold uppercase tracking-wide text-ink/55">{t("segmentsLabel")}</p>
-      <div className="flex gap-1" role="img" aria-label={`${failed.length}/${segments.length}`}>
+      <div className="flex gap-1 max-w-full overflow-x-auto py-1" role="img" aria-label={`${failed.length}/${segments.length}`}>
         {segments.map((s) => (
           <span
             key={s.seq_no}
             title={`${s.seq_no * 2}-${s.seq_no * 2 + 2}s`}
-            className={`h-8 flex-1 rounded ${s.matched ? "bg-verdict-green/35" : "bg-verdict-red"}`}
+            className={`h-8 flex-1 min-w-[6px] rounded ${s.matched ? "bg-verdict-green/35" : "bg-verdict-red"}`}
           />
         ))}
       </div>
@@ -174,6 +174,13 @@ export function VerdictCard({ result, onReport }: { result: VerifyResult; onRepo
             <span className={`chip ${tone.chip}`}>{t(`level_${result.risk.level}` as "level_low")}</span>{" "}
             <span className="align-middle">{tKey("risk", result.risk.reason)}</span>
           </p>
+        )}
+
+        {result.offline_screening && (
+          <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-950/40 p-2.5 text-xs text-amber-900 dark:text-amber-300">
+            <p className="font-semibold">⚠️ {t("offlineModeNotice")}</p>
+            <p className="mt-0.5 opacity-90">{t("offlineModeDesc")}</p>
+          </div>
         )}
       </section>
 

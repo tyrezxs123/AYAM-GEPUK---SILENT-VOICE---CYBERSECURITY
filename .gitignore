@@ -31,3 +31,6 @@ eval/out/
 # OS
 Thumbs.db
 .DS_Store
+
+# Local Netlify folder
+.netlify

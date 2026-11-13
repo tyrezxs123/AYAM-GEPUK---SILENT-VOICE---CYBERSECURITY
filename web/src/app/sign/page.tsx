@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { ErrorBox, LevelMeter, Timer } from "@/components/Feedback";
 import { CheckIcon, DownloadIcon, FileIcon, MicIcon, ShareIcon, StopIcon } from "@/components/Icons";
+import { ServerSettingsSheet } from "@/components/Sheets";
 import { createSession, prepareSession, registerKey, revokeKey, signSession } from "@/lib/api";
 import { startRecording, type Recording } from "@/lib/audio";
 import { getIdentity, sameBytes, signingPayload } from "@/lib/device-key";
@@ -56,6 +57,7 @@ export default function SignPage() {
   const [level, setLevel] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [signed, setSigned] = useState<{ blob: Blob; url: string; filename: string } | null>(null);
+  const [showServerSettings, setShowServerSettings] = useState(false);
 
   const recording = useRef<Recording | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -80,8 +82,6 @@ export default function SignPage() {
     if (name.trim().length < 1) return;
     setError(null);
     try {
-      // Creates the Ed25519 pair on first use. The private key never leaves
-      // this device - only the public key is sent.
       const identity = await getIdentity();
       const res = await registerKey({
         display_name: name.trim(),
@@ -117,8 +117,6 @@ export default function SignPage() {
       });
       const prepared = await prepareSession(session.session_id, audio);
 
-      // Rebuild the payload locally and refuse to sign anything else: the
-      // backend must not be able to steer this key at audio it did not show us.
       const payload = signingPayload({
         sessionId: session.session_id,
         nonceHex: session.nonce,
@@ -171,51 +169,60 @@ export default function SignPage() {
     void sign(blob);
   }
 
+  function onPickFile(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    void sign(file);
+  }
+
+  async function revoke() {
+    if (!device) return;
+    if (!window.confirm(t("revokeConfirm"))) return;
+    try {
+      await revokeKey(device.deviceKeyId);
+    } catch {
+      /* ignore remote error */
+    }
+    window.localStorage.removeItem(DEVICE_KEY);
+    setDevice(null);
+    setName("");
+    setPhase("register");
+  }
+
+  function reset() {
+    setError(null);
+    setSeconds(0);
+    setSigned(null);
+    setPhase(device ? "idle" : "register");
+    if (fileInput.current) fileInput.current.value = "";
+  }
+
   async function share() {
     if (!signed) return;
-    const file = new File([signed.blob], signed.filename, { type: "audio/wav" });
-    if (navigator.canShare?.({ files: [file] })) {
+    if (typeof navigator !== "undefined" && navigator.share) {
       try {
-        await navigator.share({ files: [file], title: "SilentVoice" });
+        const file = new File([signed.blob], signed.filename, { type: "audio/wav" });
+        await navigator.share({
+          files: [file],
+          title: signed.filename,
+          text: t("signedHint"),
+        });
         return;
       } catch {
-        /* user dismissed the share sheet */
+        /* share dismissed or unsupported, fall back to download */
       }
     }
-    // Fall back to a plain download when Web Share cannot take files.
     const a = document.createElement("a");
     a.href = signed.url;
     a.download = signed.filename;
     a.click();
   }
 
-  async function revoke() {
-    if (!device || !window.confirm(t("revokeConfirm"))) return;
-    try {
-      await revokeKey(device.deviceKeyId);
-      window.localStorage.removeItem(DEVICE_KEY);
-      setDevice(null);
-      setPhase("register");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setPhase("error");
-    }
-  }
-
-  function reset() {
-    if (signed) URL.revokeObjectURL(signed.url);
-    setSigned(null);
-    setSeconds(0);
-    setError(null);
-    setPhase("idle");
-    if (fileInput.current) fileInput.current.value = "";
-  }
-
   return (
     <AppShell title={t("signTitle")}>
       {phase === "register" && (
         <div className="space-y-4">
-          <label className="block text-base font-semibold text-ink dark:text-slate-100" htmlFor="display-name">
+          <label className="block text-sm sm:text-base font-semibold text-ink dark:text-slate-100" htmlFor="display-name">
             {t("signName")}
           </label>
           <input
@@ -227,7 +234,7 @@ export default function SignPage() {
             autoComplete="name"
             maxLength={60}
           />
-          <p className="text-sm text-ink/60 dark:text-slate-400">{t("signNameHint")}</p>
+          <p className="text-xs sm:text-sm text-ink/60 dark:text-slate-400">{t("signNameHint")}</p>
           <button
             type="button"
             className="primary-button"
@@ -240,14 +247,16 @@ export default function SignPage() {
       )}
 
       {phase === "idle" && device && (
-        <div className="space-y-5">
-          <p className="flex items-center gap-2 text-base text-verdict-green dark:text-emerald-400">
-            <CheckIcon className="h-5 w-5" />
-            {t("deviceReady")}: <strong>{device.displayName}</strong>
+        <div className="space-y-4 sm:space-y-5">
+          <p className="flex items-center gap-2 text-sm sm:text-base text-verdict-green dark:text-emerald-400">
+            <CheckIcon className="h-5 w-5 shrink-0" />
+            <span className="truncate">
+              {t("deviceReady")}: <strong>{device.displayName}</strong>
+            </span>
           </p>
 
           <div>
-            <label className="block text-base font-semibold text-ink dark:text-slate-100" htmlFor="context">
+            <label className="block text-sm sm:text-base font-semibold text-ink dark:text-slate-100" htmlFor="context">
               {t("signContext")}
             </label>
             <input
@@ -260,103 +269,121 @@ export default function SignPage() {
             />
           </div>
 
-          <fieldset>
-            <legend className="text-base font-semibold text-ink dark:text-slate-100">{t("signExpiry")}</legend>
-            <div className="mt-2 flex gap-2">
+          <div>
+            <span className="block text-sm sm:text-base font-semibold text-ink dark:text-slate-100">{t("signExpiry")}</span>
+            <div className="mt-2 flex flex-wrap gap-2">
               {EXPIRY_CHOICES.map((choice) => (
                 <button
                   key={choice.key}
                   type="button"
                   onClick={() => setExpiry(choice.seconds)}
-                  className={`flex-1 rounded-xl border-2 px-2 py-3 text-base font-semibold transition ${
+                  className={`chip border-2 transition ${
                     expiry === choice.seconds
-                      ? "border-brand bg-brand-soft text-brand-dark dark:border-blue-400 dark:bg-blue-950/60 dark:text-blue-300"
-                      : "border-ink/15 dark:border-white/15 text-ink/70 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      ? "border-brand bg-brand text-white dark:border-blue-500 dark:bg-blue-600"
+                      : "border-ink/15 dark:border-white/15 bg-white dark:bg-[#161c28] text-ink dark:text-slate-200"
                   }`}
                 >
-                  {t(choice.key)}
+                  {t(choice.key as "expiry_7d")}
                 </button>
               ))}
             </div>
-          </fieldset>
+          </div>
 
           <button type="button" className="primary-button" onClick={startRecord}>
-            <MicIcon className="h-6 w-6" />
-            {t("signRecord")}
+            <MicIcon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+            <span>{t("signRecord")}</span>
           </button>
-          <p className="text-center text-sm text-ink/55 dark:text-slate-400">{t("maxSeconds")}</p>
 
           <button type="button" className="secondary-button" onClick={() => fileInput.current?.click()}>
-            <FileIcon className="h-6 w-6" />
-            {t("signUpload")}
+            <FileIcon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+            <span>{t("signUpload")}</span>
           </button>
           <input
             ref={fileInput}
             type="file"
-            accept="audio/*,.wav,.mp3,.m4a,.ogg,.opus,.flac"
+            accept="audio/*,.wav,.mp3,.m4a"
             className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void sign(file);
-            }}
+            onChange={onPickFile}
           />
 
-          <button type="button" className="mt-2 text-sm text-verdict-red dark:text-rose-400 underline" onClick={revoke}>
+          <button
+            type="button"
+            className="w-full text-center text-xs sm:text-sm text-ink/50 dark:text-slate-400 hover:text-verdict-red dark:hover:text-rose-400 pt-2 transition"
+            onClick={revoke}
+          >
             {t("revokeDevice")}
           </button>
         </div>
       )}
 
       {phase === "recording" && (
-        <div className="space-y-6">
+        <div className="space-y-5 sm:space-y-6">
           <Timer seconds={seconds} max={MAX_SECONDS} />
           <LevelMeter level={level} />
           <button type="button" className="primary-button" onClick={stopRecord}>
-            <StopIcon className="h-6 w-6" />
-            {t("signRecordStop")}
+            <StopIcon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+            <span>{t("signRecordStop")}</span>
           </button>
         </div>
       )}
 
       {phase === "signing" && (
-        <p className="py-10 text-center text-xl font-semibold text-ink/70 dark:text-slate-300">{t("signing")}</p>
+        <p className="py-10 text-center text-lg sm:text-xl font-semibold text-ink/70 dark:text-slate-300">
+          {t("signing")}
+        </p>
       )}
 
       {phase === "error" && error && (
         <div className="space-y-4">
           <ErrorBox message={error} hint={t("apiHint")} />
-          <button type="button" className="secondary-button" onClick={reset}>
-            {t("back")}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              type="button"
+              className="primary-button flex-1"
+              onClick={() => setShowServerSettings(true)}
+            >
+              {t("openServerSettings")}
+            </button>
+            <button type="button" className="secondary-button flex-1" onClick={reset}>
+              {t("back")}
+            </button>
+          </div>
         </div>
       )}
 
       {phase === "done" && signed && (
         <div className="space-y-4">
           <div className="card border-verdict-green dark:border-emerald-500/50 bg-verdict-greenbg dark:bg-emerald-950/40">
-            <p className="flex items-center gap-2 text-xl font-bold text-verdict-green dark:text-emerald-400">
-              <CheckIcon className="h-7 w-7" />
-              {t("signed")}
+            <p className="flex items-center gap-2 text-lg sm:text-xl font-bold text-verdict-green dark:text-emerald-400">
+              <CheckIcon className="h-6 w-6 sm:h-7 sm:w-7 shrink-0" />
+              <span>{t("signed")}</span>
             </p>
-            <p className="mt-2 text-base text-ink/80 dark:text-slate-200">{t("signedHint")}</p>
+            <p className="mt-2 text-sm sm:text-base text-ink/80 dark:text-slate-200">{t("signedHint")}</p>
           </div>
 
           <audio className="w-full" controls src={signed.url} />
 
           <button type="button" className="primary-button" onClick={share}>
-            <ShareIcon className="h-6 w-6" />
-            {t("shareWhatsapp")}
+            <ShareIcon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+            <span>{t("shareWhatsapp")}</span>
           </button>
 
           <a className="secondary-button" href={signed.url} download={signed.filename}>
-            <DownloadIcon className="h-6 w-6" />
-            {t("download")}
+            <DownloadIcon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+            <span>{t("download")}</span>
           </a>
 
           <button type="button" className="secondary-button" onClick={reset}>
             {t("signAnother")}
           </button>
         </div>
+      )}
+
+      {showServerSettings && (
+        <ServerSettingsSheet
+          onClose={() => setShowServerSettings(false)}
+          onSaved={() => reset()}
+        />
       )}
     </AppShell>
   );

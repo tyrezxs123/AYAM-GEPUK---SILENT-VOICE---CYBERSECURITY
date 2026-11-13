@@ -5,8 +5,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { ErrorBox, LevelMeter } from "@/components/Feedback";
 import { CheckIcon, ClockIcon, PhoneOffIcon, QuestionIcon, ShieldIcon, StopIcon, WarningIcon } from "@/components/Icons";
-import { ConsentSheet, ReportSheet } from "@/components/Sheets";
+import { ConsentSheet, ReportSheet, ServerSettingsSheet } from "@/components/Sheets";
 import { EngineNote, PhraseChips } from "@/components/VerdictCard";
+import { openMic, type MicHandle } from "@/lib/audio";
+import { scanPhrases } from "@/lib/client-scanner";
 import { useI18n } from "@/lib/i18n";
 import { startLiveScan, type LiveScan } from "@/lib/live";
 import { speechSupported, startSpeech, type SpeechSession } from "@/lib/speech";
@@ -22,7 +24,7 @@ const TONE: Record<Colour, string> = {
 };
 
 function StatusIcon({ update }: { update: LiveUpdate | null }) {
-  const cls = "h-10 w-10";
+  const cls = "h-8 w-8 sm:h-10 sm:w-10 shrink-0";
   if (!update) return <QuestionIcon className={cls} />;
   if (update.replayed) return <ClockIcon className={cls} />;
   if (update.alert) return <WarningIcon className={cls} />;
@@ -37,11 +39,16 @@ export default function LivePage() {
   const [level, setLevel] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showReport, setShowReport] = useState(false);
+  const [showServerSettings, setShowServerSettings] = useState(false);
   const [asrOn, setAsrOn] = useState(false);
+  const [isLocalMode, setIsLocalMode] = useState(false);
 
   const scan = useRef<LiveScan | null>(null);
+  const localMic = useRef<MicHandle | null>(null);
   const speech = useRef<SpeechSession | null>(null);
   const lastAlert = useRef(false);
+  const localTranscript = useRef("");
+  const localStartTime = useRef(0);
 
   const stop = useCallback(async () => {
     speech.current?.stop();
@@ -49,6 +56,12 @@ export default function LivePage() {
     const current = scan.current;
     scan.current = null;
     await current?.stop();
+
+    if (localMic.current) {
+      await localMic.current.stop();
+      localMic.current = null;
+    }
+
     setPhase((p) => (p === "error" ? p : "stopped"));
   }, []);
 
@@ -56,21 +69,100 @@ export default function LivePage() {
     return () => {
       speech.current?.stop();
       void scan.current?.stop();
+      void localMic.current?.stop();
     };
   }, []);
+
+  function startLocalLiveScan() {
+    setIsLocalMode(true);
+    localStartTime.current = Date.now();
+    localTranscript.current = "";
+
+    openMic((_frame) => {
+      setLevel(localMic.current?.level() ?? 0);
+    })
+      .then((mic) => {
+        localMic.current = mic;
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : String(err));
+        setPhase("error");
+        return;
+      });
+
+    if (speechSupported()) {
+      setAsrOn(true);
+      speech.current = startSpeech(lang === "ms" ? "ms-MY" : "en-MY", (text, isFinal) => {
+        if (!text.trim()) return;
+        localTranscript.current += ` ${text}`;
+        const analysis = scanPhrases(localTranscript.current);
+        const hasScam = analysis.hits.length > 0;
+        const isRed =
+          analysis.score >= 0.7 ||
+          ((analysis.groups.money ?? 0) > 0 && (analysis.groups.urgency ?? 0) > 0);
+
+        const elapsed = Math.max(1, Math.round((Date.now() - localStartTime.current) / 1000));
+        const up: LiveUpdate = {
+          type: "update",
+          window: 1,
+          elapsed_s: elapsed,
+          verdict: "UNVERIFIED",
+          level: isRed ? "high" : hasScam ? "medium" : "low",
+          alert: isRed,
+          colour: isRed ? "red" : hasScam ? "orange" : "grey",
+          headline_key: isRed ? "unverified_high" : hasScam ? "unverified_medium" : "unverified_low",
+          step_keys: isRed
+            ? ["hang_up_now", "call_back_saved_number", "never_transfer_on_call"]
+            : hasScam
+              ? ["call_back_saved_number", "never_transfer_on_call"]
+              : ["no_proof_of_sender", "call_back_if_money"],
+          risk: {
+            level: isRed ? "high" : hasScam ? "medium" : "low",
+            reason: hasScam ? "scam_words_present" : "low_risk_not_verified",
+            ai_level: "low",
+            ai_score: 0,
+            phrase_score: analysis.score,
+            phrase_groups: analysis.groups,
+          },
+          detection: {
+            engine: "device-local-speech",
+            calibrated: false,
+            window_score: 0,
+          },
+          phrases: analysis.hits.map((h) => ({
+            phrase: h.phrase,
+            group: h.group,
+            lang: h.lang,
+          })),
+          replayed: false,
+          replay_session_id: null,
+          latency_ms: 12,
+        };
+
+        setUpdate(up);
+        if (isRed && !lastAlert.current && "vibrate" in navigator) {
+          navigator.vibrate?.([200, 100, 200, 100, 400]);
+        }
+        lastAlert.current = isRed;
+      });
+    }
+
+    setPhase("scanning");
+  }
 
   async function begin() {
     setPhase("starting");
     setError(null);
     setUpdate(null);
     lastAlert.current = false;
+    setIsLocalMode(false);
+
     try {
       scan.current = await startLiveScan({
         onLevel: setLevel,
         onMessage: (message) => {
           if (message.type === "update") {
             setUpdate(message);
-            // Vibrate once on the transition into red, not on every update.
             if (message.alert && !lastAlert.current && "vibrate" in navigator) {
               navigator.vibrate?.([200, 100, 200, 100, 400]);
             }
@@ -81,8 +173,8 @@ export default function LivePage() {
           }
         },
         onError: () => {
-          setError(t("offline"));
-          setPhase("error");
+          // If server WebSocket is offline, fall back to device-local scanning
+          startLocalLiveScan();
         },
       });
 
@@ -93,9 +185,10 @@ export default function LivePage() {
         });
       }
       setPhase("scanning");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setPhase("error");
+    } catch {
+      // If connecting to backend fails (e.g. deployed without backend proxy),
+      // seamlessly run local live scan directly on the device!
+      startLocalLiveScan();
     }
   }
 
@@ -109,42 +202,73 @@ export default function LivePage() {
   return (
     <AppShell title={t("liveTitle")}>
       {phase === "consent" && (
-        <>
-          <p className="text-base text-ink/70">{t("liveHint")}</p>
+        <div className="space-y-4">
+          <p className="text-sm sm:text-base text-ink/70 dark:text-slate-300">{t("liveHint")}</p>
           <ConsentSheet onAccept={begin} onCancel={() => history.back()} />
-        </>
+        </div>
       )}
 
       {phase === "error" && error && (
         <div className="space-y-4">
           <ErrorBox message={error} hint={t("apiHint")} />
-          <button type="button" className="secondary-button" onClick={() => setPhase("consent")}>
-            {t("liveStart")}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              type="button"
+              className="primary-button flex-1"
+              onClick={() => setShowServerSettings(true)}
+            >
+              {t("openServerSettings")}
+            </button>
+            <button
+              type="button"
+              className="secondary-button flex-1"
+              onClick={() => setPhase("consent")}
+            >
+              {t("liveStart")}
+            </button>
+          </div>
         </div>
       )}
 
       {(phase === "starting" || phase === "scanning" || phase === "stopped") && (
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
+          {isLocalMode && (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 dark:bg-amber-950/40 p-2.5 text-xs text-amber-900 dark:text-amber-300 flex items-center justify-between">
+              <div>
+                <p className="font-semibold">⚠️ {t("liveLocalMode")}</p>
+                <p className="mt-0.5 opacity-90">{t("liveLocalDesc")}</p>
+              </div>
+              <button
+                type="button"
+                className="underline text-xs ml-2 shrink-0 font-bold"
+                onClick={() => setShowServerSettings(true)}
+              >
+                {t("serverSettings")}
+              </button>
+            </div>
+          )}
+
           <section className={`card ${tone}`} aria-live="polite">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 sm:gap-3">
               <StatusIcon update={update} />
-              <span className="text-2xl font-extrabold tracking-tight">{verdictWord}</span>
+              <span className="text-xl sm:text-2xl font-extrabold tracking-tight truncate">
+                {verdictWord}
+              </span>
             </div>
 
-            <p className="mt-3 text-lg font-semibold leading-snug text-ink dark:text-slate-100">
+            <p className="mt-2.5 sm:mt-3 text-base sm:text-lg font-semibold leading-snug text-ink dark:text-slate-100">
               {update ? tKey("head", update.headline_key) : t("liveWaiting")}
             </p>
 
             {update?.alert && (
-              <p className="mt-3 flex items-start gap-2 text-lg font-bold text-verdict-red dark:text-rose-400">
-                <PhoneOffIcon className="mt-0.5 h-6 w-6 shrink-0" />
-                {t("liveRedAlert")}
+              <p className="mt-3 flex items-start gap-2 text-base sm:text-lg font-bold text-verdict-red dark:text-rose-400">
+                <PhoneOffIcon className="mt-0.5 h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                <span>{t("liveRedAlert")}</span>
               </p>
             )}
 
             {update && (
-              <ol className="mt-3 space-y-1.5 text-base text-ink/85 dark:text-slate-200">
+              <ol className="mt-3 space-y-1.5 text-sm sm:text-base text-ink/85 dark:text-slate-200">
                 {update.step_keys.map((key) => (
                   <li key={key}>• {tKey("step", key)}</li>
                 ))}
@@ -155,7 +279,7 @@ export default function LivePage() {
           {phase !== "stopped" && (
             <>
               <LevelMeter level={level} />
-              <p className="text-center text-sm text-ink/60 dark:text-slate-400">
+              <p className="text-center text-xs sm:text-sm text-ink/60 dark:text-slate-400">
                 {update ? `${update.elapsed_s}s · ${update.latency_ms} ms` : t("liveWaiting")}
               </p>
             </>
@@ -163,7 +287,7 @@ export default function LivePage() {
 
           {update && update.phrases.length > 0 && (
             <section className="space-y-2">
-              <p className="text-sm font-bold uppercase tracking-wide text-ink/60 dark:text-slate-400">
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-wide text-ink/60 dark:text-slate-400">
                 {t("liveFlagged")}
               </p>
               <PhraseChips
@@ -173,22 +297,26 @@ export default function LivePage() {
           )}
 
           {!asrOn && phase === "scanning" && (
-            <p className="text-sm text-ink/50 dark:text-slate-400">{t("noTranscript")}</p>
+            <p className="text-xs sm:text-sm text-ink/50 dark:text-slate-400">{t("noTranscript")}</p>
           )}
 
           {phase === "stopped" ? (
             <div className="space-y-3">
               <button type="button" className="primary-button" onClick={begin}>
-                {t("liveStart")}
+                <span>{t("liveStart")}</span>
               </button>
-              <button type="button" className="secondary-button" onClick={() => setShowReport(true)}>
-                {t("reportTitle")}
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setShowReport(true)}
+              >
+                <span>{t("reportTitle")}</span>
               </button>
             </div>
           ) : (
             <button type="button" className="primary-button" onClick={stop}>
-              <StopIcon className="h-6 w-6" />
-              {t("liveStop")}
+              <StopIcon className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+              <span>{t("liveStop")}</span>
             </button>
           )}
 
@@ -197,7 +325,9 @@ export default function LivePage() {
               <ShieldIcon className="h-3.5 w-3.5 text-brand dark:text-blue-400 shrink-0" />
               <span>{t("disclaimerTitle")}</span>
             </p>
-            <p className="mt-1 leading-relaxed text-ink/70 dark:text-slate-300">{t("liveNothingSaved")}</p>
+            <p className="mt-1 leading-relaxed text-ink/70 dark:text-slate-300">
+              {t("liveNothingSaved")}
+            </p>
           </div>
 
           {update && (
@@ -206,7 +336,10 @@ export default function LivePage() {
                 {t("technicalDetails")}
               </summary>
               <div className="mt-1 font-mono">
-                <EngineNote engine={update.detection.engine} calibrated={update.detection.calibrated} />
+                <EngineNote
+                  engine={update.detection.engine}
+                  calibrated={update.detection.calibrated}
+                />
               </div>
             </details>
           )}
@@ -214,6 +347,9 @@ export default function LivePage() {
       )}
 
       {showReport && <ReportSheet onClose={() => setShowReport(false)} />}
+      {showServerSettings && (
+        <ServerSettingsSheet onClose={() => setShowServerSettings(false)} />
+      )}
     </AppShell>
   );
 }
